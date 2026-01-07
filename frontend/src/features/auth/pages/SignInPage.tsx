@@ -78,34 +78,69 @@ export function SignInPage() {
   // Show success state after OTP sent
   if (otpSent && useOtp) {
     return (
-      <div className="min-h-screen flex flex-col px-6 py-8 bg-gradient-to-b from-ohafia-sand-50 to-white">
+      <div className="min-h-screen flex flex-col px-6 py-8 bg-gradient-to-b from-ohafia-sand-50 to-white dark:from-ohafia-earth-900 dark:to-ohafia-earth-800">
         <div className="flex-1 flex flex-col items-center justify-center text-center max-w-md mx-auto">
-          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6 animate-scale-in">
-            <CheckCircle className="w-10 h-10 text-green-600" />
+          <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-6 animate-scale-in">
+            <Mail className="w-12 h-12 text-green-600 dark:text-green-400" />
           </div>
-          <h1 className="font-display text-2xl font-bold text-ohafia-earth-900 mb-3">
-            Check your email! 📧
+          <h1 className="font-display text-3xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 mb-3">
+            Check your inbox! 📧
           </h1>
-          <p className="text-ohafia-earth-600 mb-2">
-            We sent a magic sign-in link to:
+          <p className="text-ohafia-earth-600 dark:text-ohafia-sand-300 mb-2 text-lg">
+            We've sent a magic sign-in link to:
           </p>
-          <p className="font-semibold text-ohafia-primary-600 mb-6">
+          <p className="font-bold text-xl text-ohafia-primary-600 dark:text-ohafia-primary-400 mb-8 break-all">
             {email}
           </p>
-          <div className="bg-ohafia-sand-100 rounded-xl p-4 w-full mb-6">
-            <p className="text-sm text-ohafia-earth-600">
-              Click the link in your email to sign in instantly. The link expires in 1 hour.
-            </p>
+          
+          <div className="bg-ohafia-sand-100 dark:bg-ohafia-earth-700 rounded-2xl p-6 w-full mb-8 text-left space-y-3">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-ohafia-earth-700 dark:text-ohafia-sand-200">
+                Click the link in your email to sign in instantly
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-ohafia-earth-700 dark:text-ohafia-sand-200">
+                The link expires in 1 hour for security
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-ohafia-earth-700 dark:text-ohafia-sand-200">
+                Check your spam folder if you don't see it
+              </p>
+            </div>
           </div>
-          <button
-            onClick={() => {
-              setOtpSent(false);
-              clearError();
-            }}
-            className="text-ohafia-primary-600 font-medium hover:underline"
-          >
-            ← Use a different email
-          </button>
+
+          <div className="w-full space-y-3">
+            <button
+              onClick={() => {
+                setOtpSent(false);
+                clearError();
+              }}
+              className="w-full py-3 px-4 rounded-xl border-2 border-ohafia-sand-300 dark:border-ohafia-earth-600 text-ohafia-earth-700 dark:text-ohafia-sand-200 font-medium hover:bg-ohafia-sand-100 dark:hover:bg-ohafia-earth-700 transition-colors"
+            >
+              ← Try a different email
+            </button>
+            <button
+              onClick={async () => {
+                setIsSubmitting(true);
+                try {
+                  await signInWithOtp(email);
+                } catch {
+                  // Error handled by store
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              disabled={isSubmitting}
+              className="w-full py-3 px-4 rounded-xl text-ohafia-primary-600 dark:text-ohafia-primary-400 font-medium hover:bg-ohafia-primary-50 dark:hover:bg-ohafia-primary-900/20 transition-colors disabled:opacity-50"
+            >
+              {isSubmitting ? 'Resending...' : 'Resend magic link'}
+            </button>
+          </div>
         </div>
       </div>
     );
