@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Ohafia Theme CSS Variables - Light Mode */
+    --color-primary: 237 90 28;
+    --color-secondary: 22 163 26;
+    --color-accent: 234 179 8;
+    --color-background: 253 252 251;
+    --color-foreground: 49 29 25;
+    --color-muted: 212 174 130;
+    
+    /* Spacing and sizing */
+    --header-height: 4rem;
+    --bottom-nav-height: 4.5rem;
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .dark {
+    /* Dark Mode Variables - Improved contrast */
+    --color-background: 26 22 20;
+    --color-foreground: 253 252 251;
+    --color-muted: 140 120 100;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-ohafia-sand-50 dark:bg-ohafia-earth-950 text-ohafia-earth-900 dark:text-ohafia-sand-50 min-h-screen transition-colors duration-300;
+    font-feature-settings: 'liga' 1, 'calt' 1;
+    padding-bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom));
+  }
+
+  /* Improved diacritic rendering for Igbo text */
+  .igbo-text {
+    font-feature-settings: 'liga' 1, 'calt' 1, 'mark' 1, 'mkmk' 1;
+    line-height: 1.6;
+  }
+}
+
+@layer components {
+  /* Button variants */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl font-semibold transition-all duration-200 
+           focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed
+           active:scale-[0.98];
+  }
+
+  .btn-primary {
+    @apply btn bg-ohafia-primary-500 text-white hover:bg-ohafia-primary-600 
+           focus:ring-ohafia-primary-500 shadow-ohafia dark:bg-ohafia-primary-600 dark:hover:bg-ohafia-primary-500;
+  }
+
+  .btn-secondary {
+    @apply btn bg-ohafia-secondary-500 text-white hover:bg-ohafia-secondary-600 
+           focus:ring-ohafia-secondary-500 dark:bg-ohafia-secondary-600 dark:hover:bg-ohafia-secondary-500;
+  }
+
+  .btn-outline {
+    @apply btn border-2 border-ohafia-primary-500 text-ohafia-primary-600 
+           hover:bg-ohafia-primary-50 focus:ring-ohafia-primary-500
+           dark:border-ohafia-primary-400 dark:text-ohafia-primary-400 dark:hover:bg-ohafia-primary-900/30;
+  }
+
+  .btn-ghost {
+    @apply btn text-ohafia-earth-700 hover:bg-ohafia-sand-200 focus:ring-ohafia-earth-500
+           dark:text-ohafia-sand-100 dark:hover:bg-ohafia-earth-700;
+  }
+
+  /* Card styles */
+  .card {
+    @apply bg-white dark:bg-ohafia-earth-800 rounded-2xl shadow-sm border border-ohafia-sand-200 dark:border-ohafia-earth-700 overflow-hidden transition-colors duration-300;
+  }
+
+  .card-interactive {
+    @apply card transition-all duration-200 hover:shadow-md hover:border-ohafia-primary-200 
+           dark:hover:border-ohafia-primary-700 active:scale-[0.99] cursor-pointer;
+  }
+
+  /* Input styles */
+  .input {
+    @apply w-full px-4 py-3 rounded-xl border border-ohafia-sand-300 bg-white
+           text-ohafia-earth-900 placeholder-ohafia-earth-400
+           focus:outline-none focus:ring-2 focus:ring-ohafia-primary-500 focus:border-transparent
+           transition-all duration-200
+           dark:bg-ohafia-earth-800 dark:border-ohafia-earth-600 dark:text-ohafia-sand-50 
+           dark:placeholder-ohafia-sand-500;
+  }
+
+  .input-field {
+    @apply input;
+  }
+
+  .input-error {
+    @apply input border-red-500 focus:ring-red-500;
+  }
+
+  /* Badge styles */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply badge bg-ohafia-primary-100 text-ohafia-primary-700 dark:bg-ohafia-primary-900/50 dark:text-ohafia-primary-300;
+  }
+
+  .badge-secondary {
+    @apply badge bg-ohafia-secondary-100 text-ohafia-secondary-700 dark:bg-ohafia-secondary-900/50 dark:text-ohafia-secondary-300;
+  }
+
+  .badge-accent {
+    @apply badge bg-ohafia-accent-100 text-ohafia-accent-700 dark:bg-ohafia-accent-900/50 dark:text-ohafia-accent-300;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    @apply h-2 bg-ohafia-sand-200 dark:bg-ohafia-earth-700 rounded-full overflow-hidden;
+  }
+
+  .progress-bar-fill {
+    @apply h-full bg-gradient-to-r from-ohafia-primary-500 to-ohafia-accent-500 
+           transition-all duration-500 ease-out rounded-full;
+  }
+
+  /* Bottom navigation */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white dark:bg-ohafia-earth-900 border-t border-ohafia-sand-200 dark:border-ohafia-earth-700 
+           px-2 pt-2 z-50 transition-colors duration-300;
+    padding-bottom: calc(0.5rem + var(--safe-area-inset-bottom));
+  }
+
+  .nav-item {
+    @apply flex flex-col items-center justify-center py-2 px-3 rounded-xl 
+           transition-all duration-200 text-ohafia-earth-500 dark:text-ohafia-sand-400;
+  }
+
+  .nav-item-active {
+    @apply nav-item text-ohafia-primary-600 bg-ohafia-primary-50 dark:bg-ohafia-primary-900/30 dark:text-ohafia-primary-400;
+  }
+
+  /* Lesson card */
+  .lesson-card {
+    @apply card-interactive p-4 flex items-center gap-4;
+  }
+
+  /* Audio player button */
+  .audio-btn {
+    @apply w-14 h-14 rounded-full bg-ohafia-primary-500 text-white 
+           flex items-center justify-center shadow-ohafia
+           hover:bg-ohafia-primary-600 active:scale-95 transition-all duration-200;
+  }
+
+  /* Record button */
+  .record-btn {
+    @apply w-20 h-20 rounded-full bg-gradient-to-br from-ohafia-primary-500 to-ohafia-primary-700
+           text-white flex items-center justify-center shadow-ohafia-lg
+           hover:from-ohafia-primary-600 hover:to-ohafia-primary-800
+           active:scale-95 transition-all duration-200;
+  }
+
+  .record-btn-recording {
+    @apply record-btn from-red-500 to-red-700 animate-pulse;
+  }
+
+  /* Streak counter */
+  .streak-badge {
+    @apply inline-flex items-center gap-1 px-3 py-1.5 rounded-full
+           bg-gradient-to-r from-ohafia-accent-400 to-ohafia-accent-500
+           text-ohafia-earth-900 font-bold text-sm shadow-sm;
+  }
+
+  /* Loading spinner */
+  .spinner {
+    @apply w-6 h-6 border-2 border-ohafia-sand-300 dark:border-ohafia-earth-600 border-t-ohafia-primary-500 
+           rounded-full animate-spin;
+  }
+}
+
+@layer utilities {
+  /* Safe area padding for mobile */
+  .pb-safe {
+    padding-bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom));
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Text gradient */
+  .text-gradient {
+    @apply bg-gradient-to-r from-ohafia-primary-500 to-ohafia-accent-500 
+           bg-clip-text text-transparent;
+  }
+}
