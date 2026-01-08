@@ -59,14 +59,14 @@ export function SignInPage() {
     try {
       if (useOtp) {
         await signInWithOtp(email);
+        // Successfully sent - show confirmation screen
         setOtpSent(true);
-        // Don't navigate - show success message instead
       } else {
         await signIn(email, password);
         // Navigation handled by useEffect watching user state
       }
     } catch {
-      // Error is handled by store
+      // Error is handled by store, keep otpSent as false
       setOtpSent(false);
     } finally {
       setIsSubmitting(false);
@@ -147,31 +147,31 @@ export function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col px-6 py-8 bg-gradient-to-b from-ohafia-sand-50 to-white">
+    <div className="min-h-screen flex flex-col px-6 py-8 bg-gradient-to-b from-ohafia-sand-50 to-white dark:from-ohafia-earth-900 dark:to-ohafia-earth-800">
       {/* Header */}
       <div className="flex items-center mb-8">
-        <Link to="/" className="p-2 -ml-2 rounded-xl hover:bg-ohafia-sand-200 transition-colors">
-          <ArrowLeft className="w-6 h-6 text-ohafia-earth-700" />
+        <Link to="/" className="p-2 -ml-2 rounded-xl hover:bg-ohafia-sand-200 dark:hover:bg-ohafia-earth-700 transition-colors">
+          <ArrowLeft className="w-6 h-6 text-ohafia-earth-700 dark:text-ohafia-sand-300" />
         </Link>
       </div>
 
       {/* Content */}
       <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
-        <h1 className="font-display text-3xl font-bold text-ohafia-earth-900 mb-2">
+        <h1 className="font-display text-3xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 mb-2">
           Welcome back! 👋
         </h1>
-        <p className="text-ohafia-earth-600 mb-8">
+        <p className="text-ohafia-earth-600 dark:text-ohafia-sand-300 mb-8">
           Continue your Igbo learning journey
         </p>
 
         {/* Error message */}
         {displayError && (
-          <div className="flex items-start gap-3 p-4 mb-6 rounded-xl bg-red-50 border border-red-100 text-red-700 animate-fade-in">
+          <div className="flex items-start gap-3 p-4 mb-6 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-700 dark:text-red-400 animate-fade-in">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium">{displayError}</p>
               {error?.toLowerCase().includes('not found') && (
-                <Link to="/auth/sign-up" className="text-sm text-red-600 underline mt-1 inline-block">
+                <Link to="/auth/sign-up" className="text-sm text-red-600 dark:text-red-400 underline mt-1 inline-block">
                   Create an account →
                 </Link>
               )}
@@ -180,14 +180,14 @@ export function SignInPage() {
         )}
 
         {/* Sign-in method selector */}
-        <div className="flex gap-2 p-1 bg-ohafia-sand-100 rounded-xl mb-6">
+        <div className="flex gap-2 p-1 bg-ohafia-sand-100 dark:bg-ohafia-earth-700 rounded-xl mb-6">
           <button
             type="button"
             onClick={() => setUseOtp(true)}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
               useOtp 
-                ? 'bg-white text-ohafia-earth-900 shadow-sm' 
-                : 'text-ohafia-earth-600 hover:text-ohafia-earth-900'
+                ? 'bg-white dark:bg-ohafia-earth-600 text-ohafia-earth-900 dark:text-ohafia-sand-50 shadow-sm' 
+                : 'text-ohafia-earth-600 dark:text-ohafia-sand-400 hover:text-ohafia-earth-900 dark:hover:text-ohafia-sand-200'
             }`}
           >
             <span className="flex items-center justify-center gap-2">
@@ -200,8 +200,8 @@ export function SignInPage() {
             onClick={() => setUseOtp(false)}
             className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
               !useOtp 
-                ? 'bg-white text-ohafia-earth-900 shadow-sm' 
-                : 'text-ohafia-earth-600 hover:text-ohafia-earth-900'
+                ? 'bg-white dark:bg-ohafia-earth-600 text-ohafia-earth-900 dark:text-ohafia-sand-50 shadow-sm' 
+                : 'text-ohafia-earth-600 dark:text-ohafia-sand-400 hover:text-ohafia-earth-900 dark:hover:text-ohafia-sand-200'
             }`}
           >
             <span className="flex items-center justify-center gap-2">
@@ -214,11 +214,11 @@ export function SignInPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Email input */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-ohafia-earth-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-ohafia-earth-700 dark:text-ohafia-sand-300 mb-2">
               Email address
             </label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ohafia-earth-400" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ohafia-earth-400 dark:text-ohafia-sand-500" />
               <input
                 id="email"
                 type="email"
@@ -235,11 +235,11 @@ export function SignInPage() {
           {/* Password input (only if not using OTP) */}
           {!useOtp && (
             <div className="animate-fade-in">
-              <label htmlFor="password" className="block text-sm font-medium text-ohafia-earth-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-ohafia-earth-700 dark:text-ohafia-sand-300 mb-2">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ohafia-earth-400" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ohafia-earth-400 dark:text-ohafia-sand-500" />
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -253,7 +253,7 @@ export function SignInPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-ohafia-earth-400 hover:text-ohafia-earth-600"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-ohafia-earth-400 dark:text-ohafia-sand-500 hover:text-ohafia-earth-600 dark:hover:text-ohafia-sand-300"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -261,7 +261,7 @@ export function SignInPage() {
               </div>
               <Link 
                 to="/auth/forgot-password" 
-                className="text-sm text-ohafia-primary-600 hover:underline mt-2 inline-block"
+                className="text-sm text-ohafia-primary-600 dark:text-ohafia-primary-400 hover:underline mt-2 inline-block"
               >
                 Forgot your password?
               </Link>
@@ -270,8 +270,8 @@ export function SignInPage() {
 
           {/* Helper text for magic link */}
           {useOtp && (
-            <div className="text-center p-4 bg-ohafia-sand-50 rounded-xl border border-ohafia-sand-200">
-              <p className="text-sm text-ohafia-earth-600">
+            <div className="text-center p-4 bg-ohafia-sand-50 dark:bg-ohafia-earth-700 rounded-xl border border-ohafia-sand-200 dark:border-ohafia-earth-600">
+              <p className="text-sm text-ohafia-earth-600 dark:text-ohafia-sand-300">
                 ✨ <strong>No password needed!</strong><br />
                 We'll send a secure sign-in link to your email.
               </p>
@@ -296,9 +296,9 @@ export function SignInPage() {
         </form>
 
         {/* Sign up link */}
-        <p className="mt-8 text-center text-ohafia-earth-600">
+        <p className="mt-8 text-center text-ohafia-earth-600 dark:text-ohafia-sand-400">
           New to Asụsụ Ohafia?{' '}
-          <Link to="/auth/sign-up" className="text-ohafia-primary-600 font-semibold hover:text-ohafia-primary-700">
+          <Link to="/auth/sign-up" className="text-ohafia-primary-600 dark:text-ohafia-primary-400 font-semibold hover:text-ohafia-primary-700 dark:hover:text-ohafia-primary-300">
             Create a free account
           </Link>
         </p>
