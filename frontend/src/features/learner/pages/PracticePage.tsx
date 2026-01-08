@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Mic, Play, RotateCcw, Volume2, Check, X, Loader2, ArrowLeft, AlertCircle, Square } from 'lucide-react';
+import { Mic, Play, RotateCcw, Volume2, Check, X, Loader2, ArrowLeft, AlertCircle, Square, BookOpen, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth-store';
 import { useAudioPlayer } from '@/lib/audio-service';
@@ -15,8 +15,12 @@ interface PracticeWord {
   audioUrl: string;
 }
 
+interface LessonWithAssetCount extends Lesson {
+  assetCount: number;
+}
+
 export function PracticePage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { speak, stop, isPlaying: ttsSpeaking } = useAudioPlayer();
@@ -39,6 +43,55 @@ export function PracticePage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
+  
+  // Available lessons for selection
+  const [availableLessons, setAvailableLessons] = useState<LessonWithAssetCount[]>([]);
+  const [isLoadingLessons, setIsLoadingLessons] = useState(false);
+
+  // Fetch available lessons when no lesson is selected
+  useEffect(() => {
+    async function fetchAvailableLessons() {
+      if (lessonId) return; // Don't fetch if we already have a lesson
+      
+      setIsLoadingLessons(true);
+      try {
+        // Fetch lessons with their asset counts
+        const { data: lessons, error: lessonsError } = await supabase
+          .from('lessons')
+          .select('*')
+          .eq('is_published', true)
+          .order('order_index', { ascending: true });
+
+        if (lessonsError) throw lessonsError;
+
+        // Get asset counts for each lesson
+        const lessonsWithCounts: LessonWithAssetCount[] = await Promise.all(
+          (lessons || []).map(async (lesson) => {
+            const { count } = await supabase
+              .from('assets')
+              .select('id', { count: 'exact', head: true })
+              .eq('lesson_id', lesson.id)
+              .in('status', ['approved', 'pending']);
+            
+            return {
+              ...lesson,
+              assetCount: count || 0,
+            };
+          })
+        );
+
+        // Filter to only lessons with vocabulary
+        setAvailableLessons(lessonsWithCounts.filter(l => l.assetCount > 0));
+      } catch (err) {
+        console.error('Error fetching lessons:', err);
+      } finally {
+        setIsLoadingLessons(false);
+        setIsLoading(false);
+      }
+    }
+
+    fetchAvailableLessons();
+  }, [lessonId]);
 
   // Fetch lesson and assets from database
   useEffect(() => {
@@ -308,7 +361,7 @@ export function PracticePage() {
   };
 
   // Loading state
-  if (isLoading) {
+  if (isLoading || isLoadingLessons) {
     return (
       <div className="min-h-screen bg-ohafia-sand-50 dark:bg-ohafia-earth-900 flex items-center justify-center">
         <div className="text-center">
@@ -319,24 +372,140 @@ export function PracticePage() {
     );
   }
 
-  // Error state
+  // No lesson selected - show lesson selector
+  if (!lessonId) {
+    return (
+      <div className="min-h-screen bg-ohafia-sand-50 dark:bg-ohafia-earth-900">
+        {/* Header */}
+        <header className="bg-white dark:bg-ohafia-earth-800 border-b border-ohafia-sand-200 dark:border-ohafia-earth-700 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/home')}
+              className="p-2 -ml-2 rounded-lg hover:bg-ohafia-sand-100 dark:hover:bg-ohafia-earth-700 text-ohafia-earth-600 dark:text-ohafia-sand-300"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50">
+              Practice
+            </h1>
+          </div>
+        </header>
+
+        <div className="p-6 max-w-2xl mx-auto">
+          {/* Welcome section */}
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 rounded-full bg-ohafia-primary-100 dark:bg-ohafia-primary-900/30 flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="w-10 h-10 text-ohafia-primary-600 dark:text-ohafia-primary-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 mb-2">
+              Choose a Lesson to Practice
+            </h2>
+            <p className="text-ohafia-earth-600 dark:text-ohafia-sand-300">
+              Select a lesson below to start practicing vocabulary with flashcards, speaking, and listening exercises.
+            </p>
+          </div>
+
+          {/* Lesson list */}
+          {availableLessons.length > 0 ? (
+            <div className="space-y-3">
+              {availableLessons.map((lessonItem) => (
+                <button
+                  key={lessonItem.id}
+                  onClick={() => setSearchParams({ lesson: lessonItem.id })}
+                  className="w-full bg-white dark:bg-ohafia-earth-800 rounded-2xl p-4 border border-ohafia-sand-200 dark:border-ohafia-earth-700 hover:border-ohafia-primary-300 dark:hover:border-ohafia-primary-600 hover:shadow-md transition-all text-left group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-ohafia-primary-100 dark:bg-ohafia-primary-900/30 flex items-center justify-center flex-shrink-0">
+                      <BookOpen className="w-6 h-6 text-ohafia-primary-600 dark:text-ohafia-primary-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-ohafia-earth-900 dark:text-ohafia-sand-50 group-hover:text-ohafia-primary-600 dark:group-hover:text-ohafia-primary-400 transition-colors">
+                        {lessonItem.title}
+                      </h3>
+                      <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-400 truncate">
+                        {lessonItem.description || `${lessonItem.assetCount} words to practice`}
+                      </p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-ohafia-sand-100 dark:bg-ohafia-earth-700 text-ohafia-earth-600 dark:text-ohafia-sand-300">
+                          {lessonItem.assetCount} words
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-ohafia-secondary-100 dark:bg-ohafia-secondary-900/30 text-ohafia-secondary-700 dark:text-ohafia-secondary-400 capitalize">
+                          {lessonItem.difficulty || 'beginner'}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-ohafia-earth-400 dark:text-ohafia-sand-500 group-hover:text-ohafia-primary-600 dark:group-hover:text-ohafia-primary-400 transition-colors" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <AlertCircle className="w-12 h-12 text-ohafia-earth-400 dark:text-ohafia-sand-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-ohafia-earth-800 dark:text-ohafia-sand-100 mb-2">
+                No Lessons Available Yet
+              </h3>
+              <p className="text-ohafia-earth-600 dark:text-ohafia-sand-300 mb-6">
+                There are no lessons with vocabulary to practice at the moment.
+              </p>
+              <button
+                onClick={() => navigate('/learn')}
+                className="btn-primary"
+              >
+                Explore Lessons
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Lesson selected but no vocabulary - show error with option to select another
   if (error || practiceWords.length === 0) {
     return (
-      <div className="min-h-screen bg-ohafia-sand-50 dark:bg-ohafia-earth-900 flex items-center justify-center p-6">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-ohafia-primary-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-ohafia-earth-800 dark:text-ohafia-sand-100 mb-2">
-            {error || 'No practice content available'}
-          </h2>
-          <p className="text-ohafia-earth-600 dark:text-ohafia-sand-300 mb-6">
-            Please add vocabulary to this lesson first.
-          </p>
-          <button
-            onClick={() => navigate('/learn')}
-            className="btn-primary"
-          >
-            Back to Lessons
-          </button>
+      <div className="min-h-screen bg-ohafia-sand-50 dark:bg-ohafia-earth-900">
+        {/* Header */}
+        <header className="bg-white dark:bg-ohafia-earth-800 border-b border-ohafia-sand-200 dark:border-ohafia-earth-700 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSearchParams({})}
+              className="p-2 -ml-2 rounded-lg hover:bg-ohafia-sand-100 dark:hover:bg-ohafia-earth-700 text-ohafia-earth-600 dark:text-ohafia-sand-300"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50">
+              Practice
+            </h1>
+          </div>
+        </header>
+
+        <div className="flex items-center justify-center p-6 min-h-[calc(100vh-80px)]">
+          <div className="text-center max-w-md">
+            <div className="w-20 h-20 rounded-full bg-ohafia-sand-100 dark:bg-ohafia-earth-700 flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="w-10 h-10 text-ohafia-earth-400 dark:text-ohafia-sand-500" />
+            </div>
+            <h2 className="text-xl font-semibold text-ohafia-earth-800 dark:text-ohafia-sand-100 mb-2">
+              {lesson?.title ? `"${lesson.title}" has no vocabulary yet` : 'No vocabulary available'}
+            </h2>
+            <p className="text-ohafia-earth-600 dark:text-ohafia-sand-300 mb-8">
+              This lesson doesn't have any vocabulary to practice. Try selecting a different lesson.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => setSearchParams({})}
+                className="btn-primary w-full"
+              >
+                Choose Another Lesson
+              </button>
+              <button
+                onClick={() => navigate('/learn')}
+                className="btn-outline w-full"
+              >
+                Browse All Lessons
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
