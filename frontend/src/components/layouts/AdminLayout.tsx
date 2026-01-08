@@ -119,30 +119,30 @@ export function AdminLayout() {
         </div>
       </header>
 
-      {/* Mobile Bottom Nav */}
+      {/* Mobile Bottom Nav - Scrollable to show all items */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-ohafia-earth-900 z-20 pb-safe">
-        <div className="flex justify-around py-2">
-          {navItems.slice(0, 5).map(({ to, icon: Icon, label, end }) => (
+        <div className="flex overflow-x-auto py-2 px-2 gap-1 scrollbar-hide">
+          {navItems.map(({ to, icon: Icon, label, end }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors
+                `flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors flex-shrink-0 min-w-[60px]
                 ${isActive 
-                  ? 'text-ohafia-gold' 
+                  ? 'text-ohafia-gold bg-white/10' 
                   : 'text-ohafia-sand-400'}`
               }
             >
               <Icon className="w-5 h-5" />
-              <span className="text-xs">{label}</span>
+              <span className="text-[10px] text-center whitespace-nowrap">{label}</span>
             </NavLink>
           ))}
         </div>
       </nav>
 
       {/* Main Content */}
-      <main className="md:ml-64 pt-16 md:pt-0 pb-20 md:pb-0 min-h-screen bg-gray-50 dark:bg-ohafia-earth-950">
+      <main className="md:ml-64 pt-14 md:pt-0 pb-24 md:pb-0 min-h-screen bg-gray-50 dark:bg-ohafia-earth-950">
         <Outlet />
       </main>
     </div>

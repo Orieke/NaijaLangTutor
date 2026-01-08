@@ -192,13 +192,15 @@ export function MyAssetsPage() {
                           Revise & Resubmit
                         </button>
                       )}
-                      <button
-                        onClick={() => handleDelete(asset.id)}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete
-                      </button>
+                      {(asset.status === 'draft' || asset.status === 'pending') && (
+                        <button
+                          onClick={() => handleDelete(asset.id)}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-2"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

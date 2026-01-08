@@ -39,6 +39,7 @@ interface AdminState {
   createLesson: (lesson: Partial<Lesson>) => Promise<Lesson | null>;
   updateLesson: (id: string, updates: Partial<Lesson>) => Promise<void>;
   deleteLesson: (id: string) => Promise<void>;
+  updateAsset: (id: string, updates: Partial<Asset>) => Promise<void>;
   clearError: () => void;
 }
 
@@ -295,6 +296,30 @@ export const useAdminStore = create<AdminState>((set, _get) => ({
 
       set(state => ({
         lessons: state.lessons.filter(l => l.id !== id),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
+  updateAsset: async (id: string, updates: Partial<Asset>) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { error } = await supabase
+        .from('assets')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        } as Record<string, unknown>)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      set(state => ({
+        assets: state.assets.map(a =>
+          a.id === id ? { ...a, ...updates, updated_at: new Date().toISOString() } : a
+        ),
         isLoading: false,
       }));
     } catch (error) {

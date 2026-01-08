@@ -5,17 +5,31 @@ import {
   FileText,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  Edit,
+  X,
+  Save,
+  Loader2
 } from 'lucide-react';
 import { useAdminStore } from '@/stores/admin-store';
+import type { Asset } from '@/types/database';
 
 type StatusFilter = 'all' | 'draft' | 'pending' | 'approved' | 'rejected';
 
 export function AssetsPage() {
-  const { assets, fetchAllAssets, isLoading } = useAdminStore();
+  const { assets, fetchAllAssets, updateAsset, isLoading } = useAdminStore();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [editForm, setEditForm] = useState({
+    igbo_text: '',
+    english_text: '',
+    pronunciation_guide: '',
+    cultural_note: '',
+    category: '',
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchAllAssets();
@@ -58,6 +72,46 @@ export function AssetsPage() {
       rejected: 'bg-red-100 text-red-700',
     };
     return styles[status] || styles.draft;
+  };
+
+  const openEditModal = (asset: Asset) => {
+    setEditingAsset(asset);
+    setEditForm({
+      igbo_text: asset.igbo_text,
+      english_text: asset.english_text,
+      pronunciation_guide: asset.pronunciation_guide || '',
+      cultural_note: asset.cultural_note || '',
+      category: asset.category || '',
+    });
+  };
+
+  const closeEditModal = () => {
+    setEditingAsset(null);
+    setEditForm({
+      igbo_text: '',
+      english_text: '',
+      pronunciation_guide: '',
+      cultural_note: '',
+      category: '',
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingAsset) return;
+    
+    setIsSaving(true);
+    try {
+      await updateAsset(editingAsset.id, {
+        igbo_text: editForm.igbo_text.trim(),
+        english_text: editForm.english_text.trim(),
+        pronunciation_guide: editForm.pronunciation_guide.trim() || null,
+        cultural_note: editForm.cultural_note.trim() || null,
+        category: editForm.category.trim() || null,
+      });
+      closeEditModal();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -132,7 +186,18 @@ export function AssetsPage() {
                   {getStatusIcon(asset.status)}
                   {asset.status}
                 </span>
-                <span className="text-xs text-gray-400 dark:text-ohafia-sand-500">{asset.type}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 dark:text-ohafia-sand-500">{asset.type}</span>
+                  {(asset.status === 'pending' || asset.status === 'approved') && (
+                    <button
+                      onClick={() => openEditModal(asset)}
+                      className="p-1 text-gray-400 hover:text-ohafia-primary dark:text-ohafia-sand-500 dark:hover:text-ohafia-primary transition-colors"
+                      title="Edit asset"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
               
               <p className="font-semibold text-gray-900 dark:text-ohafia-sand-50 mb-1">{asset.igbo_text}</p>
@@ -149,6 +214,116 @@ export function AssetsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingAsset && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-ohafia-earth-800 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-ohafia-earth-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-ohafia-sand-50">
+                Edit Asset
+              </h2>
+              <button
+                onClick={closeEditModal}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-ohafia-sand-200 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-ohafia-sand-300 mb-1">
+                  Igbo Text *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.igbo_text}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, igbo_text: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-ohafia-earth-700 dark:bg-ohafia-earth-900 dark:text-ohafia-sand-50 focus:outline-none focus:ring-2 focus:ring-ohafia-primary"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-ohafia-sand-300 mb-1">
+                  English Translation *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.english_text}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, english_text: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-ohafia-earth-700 dark:bg-ohafia-earth-900 dark:text-ohafia-sand-50 focus:outline-none focus:ring-2 focus:ring-ohafia-primary"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-ohafia-sand-300 mb-1">
+                  Pronunciation Guide
+                </label>
+                <input
+                  type="text"
+                  value={editForm.pronunciation_guide}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, pronunciation_guide: e.target.value }))}
+                  placeholder="e.g., kah-ah"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-ohafia-earth-700 dark:bg-ohafia-earth-900 dark:text-ohafia-sand-50 focus:outline-none focus:ring-2 focus:ring-ohafia-primary"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-ohafia-sand-300 mb-1">
+                  Cultural Note
+                </label>
+                <textarea
+                  value={editForm.cultural_note}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, cultural_note: e.target.value }))}
+                  placeholder="Any cultural context or usage notes"
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-ohafia-earth-700 dark:bg-ohafia-earth-900 dark:text-ohafia-sand-50 focus:outline-none focus:ring-2 focus:ring-ohafia-primary resize-none"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-ohafia-sand-300 mb-1">
+                  Category
+                </label>
+                <input
+                  type="text"
+                  value={editForm.category}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                  placeholder="e.g., greetings, food, family"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-ohafia-earth-700 dark:bg-ohafia-earth-900 dark:text-ohafia-sand-50 focus:outline-none focus:ring-2 focus:ring-ohafia-primary"
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 p-4 border-t border-gray-200 dark:border-ohafia-earth-700">
+              <button
+                onClick={closeEditModal}
+                className="px-4 py-2 text-gray-600 dark:text-ohafia-sand-300 hover:bg-gray-100 dark:hover:bg-ohafia-earth-700 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={isSaving || !editForm.igbo_text.trim() || !editForm.english_text.trim()}
+                className="px-4 py-2 bg-ohafia-primary text-white rounded-xl hover:bg-ohafia-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Save Changes
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

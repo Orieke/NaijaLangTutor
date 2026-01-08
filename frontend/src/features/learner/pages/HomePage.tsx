@@ -131,7 +131,7 @@ export function HomePage() {
       <header className="bg-gradient-to-br from-ohafia-primary-500 to-ohafia-primary-700 text-white px-6 pt-8 pb-16 rounded-b-3xl">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-ohafia-primary-100 text-sm">Nnọọ! 👋</p>
+            <p className="text-ohafia-primary-100 text-sm">Kaa! 👋</p>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               {firstName}
               {userRole && (
