@@ -37,9 +37,9 @@ const sampleLessons = [
 ];
 
 const practiceCards = [
-  { id: 'speak', title: 'Speak', icon: Mic, color: 'ohafia-primary', count: 5 },
-  { id: 'read', title: 'Read', icon: BookOpen, color: 'ohafia-secondary', count: 3 },
-  { id: 'write', title: 'Write', icon: PenTool, color: 'ohafia-accent', count: 4 },
+  { id: 'speak', title: 'Speak', icon: Mic, bgColor: 'bg-ohafia-primary-100 dark:bg-ohafia-primary-900/30', iconColor: 'text-ohafia-primary-600 dark:text-ohafia-primary-400', description: 'Practice pronunciation' },
+  { id: 'listen', title: 'Listen', icon: BookOpen, bgColor: 'bg-ohafia-secondary-100 dark:bg-ohafia-secondary-900/30', iconColor: 'text-ohafia-secondary-600 dark:text-ohafia-secondary-400', description: 'Hear native audio' },
+  { id: 'flashcard', title: 'Flashcards', icon: PenTool, bgColor: 'bg-ohafia-accent-100 dark:bg-ohafia-accent-900/30', iconColor: 'text-ohafia-accent-600 dark:text-ohafia-accent-400', description: 'Learn vocabulary' },
 ];
 
 export function HomePage() {
@@ -204,13 +204,13 @@ export function HomePage() {
               <Link
                 key={card.id}
                 to={`/practice?mode=${card.id}`}
-                className="card-interactive p-4 text-center"
+                className="card-interactive p-4 text-center hover:scale-105 transition-transform"
               >
-                <div className={`w-12 h-12 rounded-xl bg-${card.color}-100 dark:bg-${card.color}-900/30 flex items-center justify-center mx-auto mb-2`}>
-                  <card.icon className={`w-6 h-6 text-${card.color}-600 dark:text-${card.color}-400`} />
+                <div className={`w-12 h-12 rounded-xl ${card.bgColor} flex items-center justify-center mx-auto mb-2`}>
+                  <card.icon className={`w-6 h-6 ${card.iconColor}`} />
                 </div>
                 <span className="font-medium text-ohafia-earth-800 dark:text-ohafia-sand-100 text-sm block">{card.title}</span>
-                <span className="text-xs text-ohafia-earth-400 dark:text-ohafia-sand-500">{card.count} due</span>
+                <span className="text-xs text-ohafia-earth-400 dark:text-ohafia-sand-500 line-clamp-1">{card.description}</span>
               </Link>
             ))}
           </div>

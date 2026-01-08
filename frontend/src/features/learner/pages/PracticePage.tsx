@@ -25,8 +25,17 @@ export function PracticePage() {
   const { user } = useAuthStore();
   const { speak, stop, isPlaying: ttsSpeaking } = useAudioPlayer();
   const lessonId = searchParams.get('lesson');
+  const modeParam = searchParams.get('mode');
 
-  const [mode, setMode] = useState<PracticeMode>('flashcard');
+  // Set initial mode from URL parameter or default to flashcard
+  const getInitialMode = (): PracticeMode => {
+    if (modeParam === 'speak' || modeParam === 'listen' || modeParam === 'flashcard') {
+      return modeParam;
+    }
+    return 'flashcard';
+  };
+
+  const [mode, setMode] = useState<PracticeMode>(getInitialMode);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -47,6 +56,13 @@ export function PracticePage() {
   // Available lessons for selection
   const [availableLessons, setAvailableLessons] = useState<LessonWithAssetCount[]>([]);
   const [isLoadingLessons, setIsLoadingLessons] = useState(false);
+
+  // Update mode when URL param changes
+  useEffect(() => {
+    if (modeParam === 'speak' || modeParam === 'listen' || modeParam === 'flashcard') {
+      setMode(modeParam);
+    }
+  }, [modeParam]);
 
   // Fetch available lessons when no lesson is selected
   useEffect(() => {
@@ -372,6 +388,20 @@ export function PracticePage() {
     );
   }
 
+  // Get mode-specific title and description
+  const getModeInfo = () => {
+    switch (mode) {
+      case 'speak':
+        return { title: 'Speaking Practice', description: 'Practice pronouncing words by speaking them aloud.', icon: Mic };
+      case 'listen':
+        return { title: 'Listening Practice', description: 'Listen to native audio and test your comprehension.', icon: Volume2 };
+      default:
+        return { title: 'Flashcard Practice', description: 'Learn vocabulary with interactive flashcards.', icon: BookOpen };
+    }
+  };
+
+  const modeInfo = getModeInfo();
+
   // No lesson selected - show lesson selector
   if (!lessonId) {
     return (
@@ -386,7 +416,7 @@ export function PracticePage() {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <h1 className="text-xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50">
-              Practice
+              {modeInfo.title}
             </h1>
           </div>
         </header>
@@ -395,13 +425,13 @@ export function PracticePage() {
           {/* Welcome section */}
           <div className="text-center mb-8">
             <div className="w-20 h-20 rounded-full bg-ohafia-primary-100 dark:bg-ohafia-primary-900/30 flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="w-10 h-10 text-ohafia-primary-600 dark:text-ohafia-primary-400" />
+              <modeInfo.icon className="w-10 h-10 text-ohafia-primary-600 dark:text-ohafia-primary-400" />
             </div>
             <h2 className="text-2xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 mb-2">
-              Choose a Lesson to Practice
+              Choose a Lesson
             </h2>
             <p className="text-ohafia-earth-600 dark:text-ohafia-sand-300">
-              Select a lesson below to start practicing vocabulary with flashcards, speaking, and listening exercises.
+              {modeInfo.description}
             </p>
           </div>
 
@@ -411,7 +441,11 @@ export function PracticePage() {
               {availableLessons.map((lessonItem) => (
                 <button
                   key={lessonItem.id}
-                  onClick={() => setSearchParams({ lesson: lessonItem.id })}
+                  onClick={() => {
+                    const params: Record<string, string> = { lesson: lessonItem.id };
+                    if (modeParam) params.mode = modeParam;
+                    setSearchParams(params);
+                  }}
                   className="w-full bg-white dark:bg-ohafia-earth-800 rounded-2xl p-4 border border-ohafia-sand-200 dark:border-ohafia-earth-700 hover:border-ohafia-primary-300 dark:hover:border-ohafia-primary-600 hover:shadow-md transition-all text-left group"
                 >
                   <div className="flex items-center gap-4">
