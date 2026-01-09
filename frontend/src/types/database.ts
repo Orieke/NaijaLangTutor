@@ -130,6 +130,21 @@ export interface Audio {
   created_at: string;
 }
 
+// Asset category type
+export interface AssetCategory {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  status: AssetStatus;
+  created_by: string | null;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Achievement type
 export interface Achievement {
   id: string;

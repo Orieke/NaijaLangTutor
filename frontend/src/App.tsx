@@ -40,6 +40,7 @@ import { AssetsPage } from '@/features/admin/pages/AssetsPage';
 import { SettingsPage } from '@/features/admin/pages/SettingsPage';
 import { RoleRequestsPage } from '@/features/admin/pages/RoleRequestsPage';
 import { FeedbackManagementPage } from '@/features/admin/pages/FeedbackManagementPage';
+import { CategoriesPage } from '@/features/admin/pages/CategoriesPage';
 
 // Components
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
@@ -259,6 +260,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <AssetsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/categories"
+            element={
+              <ProtectedRoute>
+                <CategoriesPage />
               </ProtectedRoute>
             }
           />

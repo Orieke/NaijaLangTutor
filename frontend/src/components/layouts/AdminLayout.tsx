@@ -10,7 +10,8 @@ import {
   LogOut,
   Shield,
   UserPlus,
-  MessageSquarePlus
+  MessageSquarePlus,
+  Tag
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -22,6 +23,7 @@ const navItems = [
   { to: '/admin/users', icon: Users, label: 'Users' },
   { to: '/admin/lessons', icon: BookOpen, label: 'Lessons' },
   { to: '/admin/assets', icon: FileText, label: 'Assets' },
+  { to: '/admin/categories', icon: Tag, label: 'Categories' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -7,9 +7,12 @@ import {
   Sparkles,
   Loader2,
   Volume2,
-  VolumeX
+  VolumeX,
+  Plus,
+  X
 } from 'lucide-react';
 import { useContributorStore } from '@/stores/contributor-store';
+import { useCategoryStore } from '@/stores/category-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { useAudioPlayer } from '@/lib/audio-service';
 
@@ -25,8 +28,9 @@ const assetTypes: { value: AssetType; label: string; description: string }[] = [
 
 export function CreateAssetPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, profile } = useAuthStore();
   const { createAsset, isLoading, error } = useContributorStore();
+  const { categories, fetchCategories, createCategory } = useCategoryStore();
   const { speak, stop, isPlaying, isAvailable: ttsAvailable } = useAudioPlayer();
 
   const [assetType, setAssetType] = useState<AssetType>('word');
@@ -36,6 +40,20 @@ export function CreateAssetPage() {
   const [culturalNote, setCulturalNote] = useState('');
   const [category, setCategory] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  
+  // New category modal state
+  const [showNewCategoryModal, setShowNewCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryDescription, setNewCategoryDescription] = useState('');
+  const [newCategoryIcon, setNewCategoryIcon] = useState('');
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
+
+  const isAdmin = profile?.role === 'admin';
+
+  // Fetch categories on mount
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   // Handle text-to-speech for the Igbo text
   const handleSpeak = (text: string) => {
@@ -43,6 +61,37 @@ export function CreateAssetPage() {
       stop();
     } else if (text.trim()) {
       speak(text, { rate: 0.8 }); // Slower rate for language learning
+    }
+  };
+  
+  // Handle creating a new category
+  const handleCreateCategory = async () => {
+    if (!user || !newCategoryName.trim()) return;
+    
+    setIsCreatingCategory(true);
+    try {
+      const newCategory = await createCategory({
+        name: newCategoryName.trim().toLowerCase().replace(/\s+/g, '_'),
+        description: newCategoryDescription.trim() || null,
+        icon: newCategoryIcon.trim() || null,
+        status: isAdmin ? 'approved' : 'pending', // Admins auto-approve
+        created_by: user.id,
+        approved_by: isAdmin ? user.id : null,
+        approved_at: isAdmin ? new Date().toISOString() : null,
+      });
+      
+      if (newCategory) {
+        // If admin, select the new category immediately
+        if (isAdmin) {
+          setCategory(newCategory.name);
+        }
+        setShowNewCategoryModal(false);
+        setNewCategoryName('');
+        setNewCategoryDescription('');
+        setNewCategoryIcon('');
+      }
+    } finally {
+      setIsCreatingCategory(false);
     }
   };
 
@@ -218,25 +267,32 @@ export function CreateAssetPage() {
           <label className="block text-sm font-medium text-ohafia-earth-700 dark:text-ohafia-sand-200 mb-2">
             Category <span className="text-ohafia-earth-400 dark:text-ohafia-sand-500 font-normal">(Optional)</span>
           </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="input"
-          >
-            <option value="">Select a category...</option>
-            <option value="greetings">Greetings</option>
-            <option value="family">Family</option>
-            <option value="food">Food & Cooking</option>
-            <option value="numbers">Numbers</option>
-            <option value="colors">Colors</option>
-            <option value="animals">Animals</option>
-            <option value="nature">Nature</option>
-            <option value="body">Body Parts</option>
-            <option value="time">Time & Calendar</option>
-            <option value="market">Market & Commerce</option>
-            <option value="culture">Culture & Traditions</option>
-            <option value="proverbs">Proverbs & Wisdom</option>
-          </select>
+          <div className="flex gap-2">
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="input flex-1"
+            >
+              <option value="">Select a category...</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.name}>
+                  {cat.icon && `${cat.icon} `}{cat.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setShowNewCategoryModal(true)}
+              className="btn-secondary flex items-center gap-1 px-3"
+              title="Suggest new category"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">New</span>
+            </button>
+          </div>
+          <p className="text-xs text-ohafia-earth-500 dark:text-ohafia-sand-400 mt-1">
+            Don't see your category? Click "New" to suggest one{!isAdmin && ' (requires admin approval)'}
+          </p>
         </div>
 
         {/* Cultural Note */}
@@ -335,6 +391,99 @@ export function CreateAssetPage() {
           </button>
         </div>
       </div>
+
+      {/* New Category Modal */}
+      {showNewCategoryModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-ohafia-earth-800 rounded-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-4 border-b border-ohafia-sand-200 dark:border-ohafia-earth-700">
+              <h2 className="text-lg font-semibold text-ohafia-earth-900 dark:text-ohafia-sand-50">
+                {isAdmin ? 'Create New Category' : 'Suggest New Category'}
+              </h2>
+              <button
+                onClick={() => setShowNewCategoryModal(false)}
+                className="p-2 text-ohafia-earth-400 hover:text-ohafia-earth-600 dark:hover:text-ohafia-sand-200 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              {!isAdmin && (
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl text-sm text-yellow-800 dark:text-yellow-200">
+                  Your category suggestion will be reviewed by an admin before it becomes available.
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium text-ohafia-earth-700 dark:text-ohafia-sand-200 mb-1">
+                  Category Name *
+                </label>
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="e.g., Clothing, Weather, Sports"
+                  className="input"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-ohafia-earth-700 dark:text-ohafia-sand-200 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={newCategoryDescription}
+                  onChange={(e) => setNewCategoryDescription(e.target.value)}
+                  placeholder="What types of words/phrases belong in this category?"
+                  rows={2}
+                  className="input"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-ohafia-earth-700 dark:text-ohafia-sand-200 mb-1">
+                  Emoji Icon (optional)
+                </label>
+                <input
+                  type="text"
+                  value={newCategoryIcon}
+                  onChange={(e) => setNewCategoryIcon(e.target.value)}
+                  placeholder="e.g., 👕 ☀️ ⚽"
+                  className="input"
+                  maxLength={4}
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 p-4 border-t border-ohafia-sand-200 dark:border-ohafia-earth-700">
+              <button
+                onClick={() => setShowNewCategoryModal(false)}
+                className="px-4 py-2 text-ohafia-earth-600 dark:text-ohafia-sand-300 hover:bg-ohafia-sand-100 dark:hover:bg-ohafia-earth-700 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateCategory}
+                disabled={isCreatingCategory || !newCategoryName.trim()}
+                className="px-4 py-2 bg-ohafia-primary text-white rounded-xl hover:bg-ohafia-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+              >
+                {isCreatingCategory ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {isAdmin ? 'Creating...' : 'Submitting...'}
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    {isAdmin ? 'Create Category' : 'Submit for Approval'}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
