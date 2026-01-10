@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, Play, Lock, CheckCircle, Volume2, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth-store';
@@ -8,6 +8,8 @@ import type { Lesson, Asset, Progress } from '@/types/database';
 
 export function LearnPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedLessonId = searchParams.get('lesson');
   const { user } = useAuthStore();
   const { speak, stop, isAvailable: ttsAvailable } = useAudioPlayer();
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -18,7 +20,9 @@ export function LearnPage() {
   const [error, setError] = useState<string | null>(null);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [speakingAssetId, setSpeakingAssetId] = useState<string | null>(null);
+  const [highlightedLessonId, setHighlightedLessonId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const lessonRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Fetch lessons, assets, and progress from database
   useEffect(() => {
@@ -107,6 +111,23 @@ export function LearnPage() {
 
     fetchContent();
   }, [user?.id]);
+
+  // Scroll to selected lesson when data is loaded
+  useEffect(() => {
+    if (!isLoading && selectedLessonId && lessons.length > 0) {
+      // Wait a bit for the DOM to update
+      const timeoutId = setTimeout(() => {
+        const lessonElement = lessonRefs.current[selectedLessonId];
+        if (lessonElement) {
+          lessonElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setHighlightedLessonId(selectedLessonId);
+          // Remove highlight after animation
+          setTimeout(() => setHighlightedLessonId(null), 2000);
+        }
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isLoading, selectedLessonId, lessons]);
 
   // Play audio for an asset
   const playAudio = async (asset: Asset) => {
@@ -357,9 +378,18 @@ export function LearnPage() {
                 const isLocked = index > 0 && !isPreviousCompleted;
                 const isCompleted = isLessonCompleted(lesson.id);
                 const lessonProgress = getLessonProgress(lesson.id);
+                const isHighlighted = highlightedLessonId === lesson.id;
 
                 return (
-                  <div key={lesson.id} className="card overflow-hidden">
+                  <div 
+                    key={lesson.id} 
+                    ref={(el) => { lessonRefs.current[lesson.id] = el; }}
+                    className={`card overflow-hidden transition-all duration-300 ${
+                      isHighlighted 
+                        ? 'ring-2 ring-ohafia-primary-500 ring-offset-2 shadow-lg scale-[1.02]' 
+                        : ''
+                    }`}
+                  >
                     <button
                       onClick={() => !isLocked && navigate(`/practice?lesson=${lesson.id}`)}
                       disabled={isLocked}
