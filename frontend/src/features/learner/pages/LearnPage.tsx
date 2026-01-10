@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { ChevronRight, Play, Lock, CheckCircle, Volume2, Loader2, AlertCircle, RefreshCw, Trophy, Star, ArrowRight, X } from 'lucide-react';
+import { ChevronRight, Play, Lock, CheckCircle, Volume2, Loader2, AlertCircle, RefreshCw, Trophy, Star, ArrowRight, X, Filter } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth-store';
 import { useAudioPlayer } from '@/lib/audio-service';
@@ -30,6 +30,7 @@ export function LearnPage() {
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [speakingAssetId, setSpeakingAssetId] = useState<string | null>(null);
   const [highlightedLessonId, setHighlightedLessonId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lessonRefs = useRef<Record<string, HTMLDivElement | null>>({});
   
@@ -68,8 +69,8 @@ export function LearnPage() {
             )
           `)
           .in('status', ['approved', 'pending'])
-          .order('created_at', { ascending: false })
-          .limit(50);
+          .order('category', { ascending: true })
+          .order('created_at', { ascending: false });
 
         if (assetsError) {
           console.error('Assets fetch error:', assetsError);
@@ -216,8 +217,27 @@ export function LearnPage() {
     }
   };
 
-  // Group assets by category or type
-  const groupedAssets = assets.reduce((acc, asset) => {
+  // Get unique categories from assets
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    assets.forEach(asset => {
+      const category = asset.category || asset.type || 'general';
+      cats.add(category);
+    });
+    return Array.from(cats).sort();
+  }, [assets]);
+
+  // Filter assets by selected category
+  const filteredAssets = useMemo(() => {
+    if (selectedCategory === 'all') return assets;
+    return assets.filter(asset => {
+      const category = asset.category || asset.type || 'general';
+      return category === selectedCategory;
+    });
+  }, [assets, selectedCategory]);
+
+  // Group filtered assets by category or type
+  const groupedAssets = filteredAssets.reduce((acc, asset) => {
     const category = asset.category || asset.type || 'general';
     if (!acc[category]) {
       acc[category] = [];
@@ -307,7 +327,9 @@ export function LearnPage() {
                 </div>
                 <div className="text-left">
                   <h3 className="font-semibold text-ohafia-earth-800 dark:text-ohafia-sand-100">Vocabulary</h3>
-                  <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-400">{assets.length} words & phrases</p>
+                  <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-400">
+                    {filteredAssets.length} of {assets.length} words & phrases
+                  </p>
                 </div>
               </div>
               <ChevronRight className={`w-5 h-5 text-ohafia-earth-400 transition-transform ${showVocab ? 'rotate-90' : ''}`} />
@@ -315,6 +337,40 @@ export function LearnPage() {
             
             {showVocab && (
               <div className="space-y-2 animate-slide-up">
+                {/* Category Filter */}
+                <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+                  <div className="flex items-center gap-1 text-ohafia-earth-500 dark:text-ohafia-sand-400 flex-shrink-0">
+                    <Filter className="w-4 h-4" />
+                    <span className="text-xs font-medium">Filter:</span>
+                  </div>
+                  <button
+                    onClick={() => setSelectedCategory('all')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0
+                      ${selectedCategory === 'all'
+                        ? 'bg-ohafia-primary-500 text-white'
+                        : 'bg-ohafia-sand-100 dark:bg-ohafia-earth-700 text-ohafia-earth-600 dark:text-ohafia-sand-300 hover:bg-ohafia-sand-200 dark:hover:bg-ohafia-earth-600'
+                      }`}
+                  >
+                    All ({assets.length})
+                  </button>
+                  {categories.map((category) => {
+                    const count = assets.filter(a => (a.category || a.type || 'general') === category).length;
+                    return (
+                      <button
+                        key={category}
+                        onClick={() => setSelectedCategory(category)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors capitalize flex-shrink-0
+                          ${selectedCategory === category
+                            ? 'bg-ohafia-primary-500 text-white'
+                            : 'bg-ohafia-sand-100 dark:bg-ohafia-earth-700 text-ohafia-earth-600 dark:text-ohafia-sand-300 hover:bg-ohafia-sand-200 dark:hover:bg-ohafia-earth-600'
+                          }`}
+                      >
+                        {category} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+
                 {Object.entries(groupedAssets).map(([category, categoryAssets]) => (
                   <div key={category} className="mb-4">
                     <h4 className="text-xs font-semibold text-ohafia-earth-500 dark:text-ohafia-sand-400 uppercase tracking-wide mb-2 px-1">
