@@ -1,13 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronRight, Play, Lock, CheckCircle, Volume2, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { ChevronRight, Play, Lock, CheckCircle, Volume2, Loader2, AlertCircle, RefreshCw, Trophy, Star, ArrowRight, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/auth-store';
 import { useAudioPlayer } from '@/lib/audio-service';
 import type { Lesson, Asset, Progress } from '@/types/database';
 
+// Completion state from navigation
+interface CompletionState {
+  completed?: boolean;
+  lessonId?: string;
+  accuracy?: number;
+  lessonTitle?: string;
+}
+
 export function LearnPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const selectedLessonId = searchParams.get('lesson');
   const { user } = useAuthStore();
@@ -23,6 +32,11 @@ export function LearnPage() {
   const [highlightedLessonId, setHighlightedLessonId] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lessonRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  
+  // Completion modal state
+  const completionState = location.state as CompletionState | null;
+  const [showCompletionModal, setShowCompletionModal] = useState(!!completionState?.completed);
+  const [nextLesson, setNextLesson] = useState<Lesson | null>(null);
 
   // Fetch lessons, assets, and progress from database
   useEffect(() => {
@@ -111,6 +125,16 @@ export function LearnPage() {
 
     fetchContent();
   }, [user?.id]);
+
+  // Find next lesson after completion
+  useEffect(() => {
+    if (completionState?.completed && completionState?.lessonId && lessons.length > 0) {
+      const completedIndex = lessons.findIndex(l => l.id === completionState.lessonId);
+      if (completedIndex !== -1 && completedIndex < lessons.length - 1) {
+        setNextLesson(lessons[completedIndex + 1]);
+      }
+    }
+  }, [completionState, lessons]);
 
   // Scroll to selected lesson when data is loaded
   useEffect(() => {
@@ -455,6 +479,94 @@ export function LearnPage() {
           )}
         </section>
       </main>
+
+      {/* Lesson Completion Modal */}
+      {showCompletionModal && completionState && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-ohafia-earth-800 rounded-3xl max-w-sm w-full p-6 text-center animate-scale-in shadow-2xl">
+            {/* Close button */}
+            <button
+              onClick={() => {
+                setShowCompletionModal(false);
+                // Clear the location state
+                navigate(location.pathname, { replace: true });
+              }}
+              className="absolute top-4 right-4 p-2 text-ohafia-earth-400 hover:text-ohafia-earth-600 dark:text-ohafia-sand-500 dark:hover:text-ohafia-sand-300"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            {/* Trophy icon */}
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center mx-auto mb-4 animate-bounce-slow shadow-lg">
+              <Trophy className="w-12 h-12 text-white" />
+            </div>
+            
+            <h2 className="font-display text-2xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 mb-2">
+              🎉 Lesson Complete!
+            </h2>
+            
+            <p className="text-lg text-ohafia-earth-600 dark:text-ohafia-sand-300 mb-4">
+              Great job finishing <strong className="text-ohafia-primary-600 dark:text-ohafia-primary-400">{completionState.lessonTitle || 'the lesson'}</strong>!
+            </p>
+            
+            {/* Accuracy score */}
+            {completionState.accuracy !== undefined && (
+              <div className="bg-ohafia-sand-100 dark:bg-ohafia-earth-700 rounded-2xl p-4 mb-6">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Star className="w-5 h-5 text-yellow-500" />
+                  <span className="text-sm font-medium text-ohafia-earth-600 dark:text-ohafia-sand-300">Your Score</span>
+                  <Star className="w-5 h-5 text-yellow-500" />
+                </div>
+                <p className="text-4xl font-bold text-ohafia-primary-600 dark:text-ohafia-primary-400">
+                  {completionState.accuracy}%
+                </p>
+                <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-400 mt-1">
+                  {completionState.accuracy >= 80 ? 'Excellent work! 🌟' : 
+                   completionState.accuracy >= 60 ? 'Good progress! 👍' : 
+                   'Keep practicing! 💪'}
+                </p>
+              </div>
+            )}
+            
+            {/* Action buttons */}
+            <div className="space-y-3">
+              {nextLesson ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setShowCompletionModal(false);
+                      navigate(`/practice?lesson=${nextLesson.id}`);
+                    }}
+                    className="w-full btn-primary py-3 flex items-center justify-center gap-2"
+                  >
+                    <span>Continue to Next Lesson</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
+                  <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-400">
+                    Next: <strong>{nextLesson.title}</strong>
+                  </p>
+                </>
+              ) : (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-4">
+                  <p className="text-green-700 dark:text-green-300 font-medium">
+                    🏆 You've completed all available lessons!
+                  </p>
+                </div>
+              )}
+              
+              <button
+                onClick={() => {
+                  setShowCompletionModal(false);
+                  navigate(location.pathname, { replace: true });
+                }}
+                className="w-full py-3 text-ohafia-earth-600 dark:text-ohafia-sand-400 hover:text-ohafia-earth-800 dark:hover:text-ohafia-sand-200 transition-colors"
+              >
+                Back to Lessons
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -145,70 +145,82 @@ export const useLearnerStore = create<LearnerState>()(
 
       fetchContinueLesson: async (userId) => {
         try {
-          // Find the most recent incomplete progress
-          const { data: progressData, error: progressError } = await supabase
-            .from('progress')
-            .select('*, lesson:lessons(*)')
-            .eq('user_id', userId)
-            .eq('is_completed', false)
-            .order('last_practiced_at', { ascending: false })
-            .limit(1)
-            .single();
+          // First, get all published lessons ordered by index
+          const { data: allLessons, error: lessonsError } = await supabase
+            .from('lessons')
+            .select('*')
+            .eq('is_published', true)
+            .order('order_index', { ascending: true });
 
-          if (progressError && progressError.code !== 'PGRST116') {
-            // PGRST116 = no rows returned, which is fine
-            console.error('Error fetching continue lesson:', progressError);
+          if (lessonsError) {
+            console.error('Error fetching lessons:', lessonsError);
+            return;
           }
 
-          if (progressData && progressData.lesson) {
-            const lesson = progressData.lesson as Lesson;
-            
+          if (!allLessons || allLessons.length === 0) {
+            set({ continueLesson: null });
+            return;
+          }
+
+          // Get all user's progress records
+          const { data: userProgress, error: progressError } = await supabase
+            .from('progress')
+            .select('*')
+            .eq('user_id', userId);
+
+          if (progressError && progressError.code !== 'PGRST116') {
+            console.error('Error fetching progress:', progressError);
+          }
+
+          // Create a map of completed lessons
+          const completedLessonIds = new Set(
+            (userProgress || [])
+              .filter(p => p.is_completed)
+              .map(p => p.lesson_id)
+          );
+
+          // Find the first lesson that is NOT completed
+          const nextLesson = allLessons.find(lesson => !completedLessonIds.has(lesson.id));
+
+          if (nextLesson) {
             // Get asset count for this lesson
             const { count } = await supabase
               .from('assets')
               .select('*', { count: 'exact', head: true })
-              .eq('lesson_id', lesson.id)
+              .eq('lesson_id', nextLesson.id)
               .eq('status', 'approved');
             
+            // Check if there's existing progress for this lesson
+            const existingProgress = (userProgress || []).find(p => p.lesson_id === nextLesson.id);
             const assetCount = count || 0;
-            const completedAssets = progressData.completed_assets?.length || 0;
+            const completedAssets = existingProgress?.completed_assets?.length || 0;
             const progress = assetCount > 0 ? Math.round((completedAssets / assetCount) * 100) : 0;
 
             set({
               continueLesson: {
-                ...lesson,
+                ...nextLesson,
                 progress,
                 assetCount,
                 completedAssets,
-              },
+              } as LessonWithProgress,
             });
           } else {
-            // No in-progress lesson, find the first unstarted published lesson
-            const { data: firstLesson } = await supabase
-              .from('lessons')
-              .select('*')
-              .eq('is_published', true)
-              .order('order_index', { ascending: true })
-              .limit(1)
-              .single();
+            // All lessons completed - show the last lesson as "completed"
+            const lastLesson = allLessons[allLessons.length - 1];
+            const { count } = await supabase
+              .from('assets')
+              .select('*', { count: 'exact', head: true })
+              .eq('lesson_id', lastLesson.id)
+              .eq('status', 'approved');
 
-            if (firstLesson) {
-              // Get asset count
-              const { count } = await supabase
-                .from('assets')
-                .select('*', { count: 'exact', head: true })
-                .eq('lesson_id', firstLesson.id)
-                .eq('status', 'approved');
-
-              set({
-                continueLesson: {
-                  ...firstLesson,
-                  progress: 0,
-                  assetCount: count || 0,
-                  completedAssets: 0,
-                } as LessonWithProgress,
-              });
-            }
+            set({
+              continueLesson: {
+                ...lastLesson,
+                progress: 100,
+                assetCount: count || 0,
+                completedAssets: count || 0,
+              } as LessonWithProgress,
+            });
           }
         } catch (error) {
           console.error('Error in fetchContinueLesson:', error);
