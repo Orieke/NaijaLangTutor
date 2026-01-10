@@ -508,7 +508,7 @@ function SettingsModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 animate-fade-in">
       <div className="card w-full sm:max-w-md sm:mx-4 rounded-t-3xl sm:rounded-2xl animate-slide-up sm:animate-scale-in max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-ohafia-sand-200 dark:border-ohafia-earth-700">
+        <div className="flex items-center justify-between p-4 border-b border-ohafia-sand-200 dark:border-ohafia-earth-700 flex-shrink-0">
           <h2 className="text-lg font-bold text-ohafia-earth-900 dark:text-ohafia-sand-100">{title}</h2>
           <button
             onClick={onClose}
@@ -517,7 +517,7 @@ function SettingsModal({
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-4 overflow-y-auto">
+        <div className="p-4 flex-1 min-h-0 overflow-y-auto overscroll-contain">
           {children}
         </div>
       </div>

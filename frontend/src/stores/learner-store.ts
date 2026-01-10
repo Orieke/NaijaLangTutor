@@ -4,17 +4,27 @@ import type { Lesson, Asset, Progress } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 import { queueAttempt, getUnsyncedAttempts, markAttemptsSynced } from '@/lib/offline-db';
 
+interface LessonWithProgress extends Lesson {
+  progress?: number; // 0-100 percentage
+  assetCount?: number;
+  completedAssets?: number;
+}
+
 interface LearnerState {
   // Daily plan
-  todaysPlan: Lesson[];
+  todaysPlan: LessonWithProgress[];
   currentLesson: Lesson | null;
   currentAssets: Asset[];
   currentStepIndex: number;
   
+  // Continue learning - most recent incomplete lesson
+  continueLesson: LessonWithProgress | null;
+  
   // Progress
-  progress: Progress | null;
+  progressMap: Record<string, Progress>; // lessonId -> Progress
   streak: number;
   lastActiveDate: string | null;
+  dailyGoal: { completed: number; total: number };
   
   // Loading states
   isLoading: boolean;
@@ -22,7 +32,8 @@ interface LearnerState {
   error: string | null;
 
   // Actions
-  fetchTodaysPlan: (userId: string, level: string) => Promise<void>;
+  fetchTodaysPlan: (userId: string, level?: string) => Promise<void>;
+  fetchContinueLesson: (userId: string) => Promise<void>;
   startLesson: (lessonId: string) => Promise<void>;
   completeStep: () => void;
   recordAttempt: (data: {
@@ -33,7 +44,7 @@ interface LearnerState {
     score: number;
     metadata?: Record<string, unknown>;
   }) => Promise<void>;
-  fetchProgress: (userId: string) => Promise<void>;
+  fetchAllProgress: (userId: string) => Promise<void>;
   syncOfflineAttempts: (userId: string) => Promise<void>;
   updateStreak: (userId: string) => Promise<void>;
 }
@@ -45,33 +56,162 @@ export const useLearnerStore = create<LearnerState>()(
       currentLesson: null,
       currentAssets: [],
       currentStepIndex: 0,
-      progress: null,
+      continueLesson: null,
+      progressMap: {},
       streak: 0,
       lastActiveDate: null,
+      dailyGoal: { completed: 0, total: 5 },
       isLoading: false,
       isSyncing: false,
       error: null,
 
-      fetchTodaysPlan: async (_userId, level) => {
+      fetchTodaysPlan: async (userId, level) => {
         try {
           set({ isLoading: true, error: null });
           
-          // Fetch lessons for user's level
-          const { data: lessons, error } = await supabase
+          // Fetch published lessons, optionally filtered by difficulty
+          let query = supabase
             .from('lessons')
             .select('*')
-            .eq('level', level)
+            .eq('is_published', true)
             .order('order_index', { ascending: true })
             .limit(5);
+          
+          if (level) {
+            query = query.eq('difficulty', level);
+          }
+
+          const { data: lessons, error } = await query;
 
           if (error) throw error;
           
-          set({ todaysPlan: (lessons || []) as Lesson[], isLoading: false });
+          // Fetch user's progress for these lessons
+          const lessonIds = (lessons || []).map(l => l.id);
+          const { data: progressData } = await supabase
+            .from('progress')
+            .select('*')
+            .eq('user_id', userId)
+            .in('lesson_id', lessonIds);
+          
+          // Create progress map
+          const progressByLesson: Record<string, Progress> = {};
+          (progressData || []).forEach(p => {
+            progressByLesson[p.lesson_id] = p as Progress;
+          });
+
+          // Fetch asset counts for each lesson
+          const { data: assetCounts } = await supabase
+            .from('assets')
+            .select('lesson_id')
+            .eq('status', 'approved')
+            .in('lesson_id', lessonIds);
+          
+          const countByLesson: Record<string, number> = {};
+          (assetCounts || []).forEach(a => {
+            countByLesson[a.lesson_id] = (countByLesson[a.lesson_id] || 0) + 1;
+          });
+
+          // Combine lessons with progress
+          const lessonsWithProgress: LessonWithProgress[] = (lessons || []).map(lesson => {
+            const prog = progressByLesson[lesson.id];
+            const assetCount = countByLesson[lesson.id] || 0;
+            const completedAssets = prog?.completed_assets?.length || 0;
+            const progress = assetCount > 0 ? Math.round((completedAssets / assetCount) * 100) : 0;
+            
+            return {
+              ...lesson,
+              progress,
+              assetCount,
+              completedAssets,
+            } as LessonWithProgress;
+          });
+
+          // Calculate daily goal
+          const completedToday = lessonsWithProgress.filter(l => l.progress === 100).length;
+          
+          set({ 
+            todaysPlan: lessonsWithProgress, 
+            progressMap: progressByLesson,
+            dailyGoal: { completed: completedToday, total: 5 },
+            isLoading: false 
+          });
         } catch (error) {
           set({ 
             error: error instanceof Error ? error.message : 'Failed to fetch lessons',
             isLoading: false 
           });
+        }
+      },
+
+      fetchContinueLesson: async (userId) => {
+        try {
+          // Find the most recent incomplete progress
+          const { data: progressData, error: progressError } = await supabase
+            .from('progress')
+            .select('*, lesson:lessons(*)')
+            .eq('user_id', userId)
+            .eq('is_completed', false)
+            .order('last_practiced_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (progressError && progressError.code !== 'PGRST116') {
+            // PGRST116 = no rows returned, which is fine
+            console.error('Error fetching continue lesson:', progressError);
+          }
+
+          if (progressData && progressData.lesson) {
+            const lesson = progressData.lesson as Lesson;
+            
+            // Get asset count for this lesson
+            const { count } = await supabase
+              .from('assets')
+              .select('*', { count: 'exact', head: true })
+              .eq('lesson_id', lesson.id)
+              .eq('status', 'approved');
+            
+            const assetCount = count || 0;
+            const completedAssets = progressData.completed_assets?.length || 0;
+            const progress = assetCount > 0 ? Math.round((completedAssets / assetCount) * 100) : 0;
+
+            set({
+              continueLesson: {
+                ...lesson,
+                progress,
+                assetCount,
+                completedAssets,
+              },
+            });
+          } else {
+            // No in-progress lesson, find the first unstarted published lesson
+            const { data: firstLesson } = await supabase
+              .from('lessons')
+              .select('*')
+              .eq('is_published', true)
+              .order('order_index', { ascending: true })
+              .limit(1)
+              .single();
+
+            if (firstLesson) {
+              // Get asset count
+              const { count } = await supabase
+                .from('assets')
+                .select('*', { count: 'exact', head: true })
+                .eq('lesson_id', firstLesson.id)
+                .eq('status', 'approved');
+
+              set({
+                continueLesson: {
+                  ...firstLesson,
+                  progress: 0,
+                  assetCount: count || 0,
+                  completedAssets: 0,
+                } as LessonWithProgress,
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error in fetchContinueLesson:', error);
         }
       },
 
@@ -152,19 +292,23 @@ export const useLearnerStore = create<LearnerState>()(
         }
       },
 
-      fetchProgress: async (userId) => {
+      fetchAllProgress: async (userId) => {
         try {
           set({ isLoading: true });
           
           const { data, error } = await supabase
             .from('progress')
             .select('*')
-            .eq('user_id', userId)
-            .single();
+            .eq('user_id', userId);
 
           if (error && error.code !== 'PGRST116') throw error;
           
-          set({ progress: data as Progress | null, isLoading: false });
+          const progressMap: Record<string, Progress> = {};
+          (data || []).forEach((p: Progress) => {
+            progressMap[p.lesson_id] = p;
+          });
+          
+          set({ progressMap, isLoading: false });
         } catch (error) {
           set({ 
             error: error instanceof Error ? error.message : 'Failed to fetch progress',

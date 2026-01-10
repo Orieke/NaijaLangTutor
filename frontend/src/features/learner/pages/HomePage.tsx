@@ -5,36 +5,15 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useLearnerStore } from '@/stores/learner-store';
 import { supabase } from '@/lib/supabase';
 
-// Sample lessons for demo
-const sampleLessons = [
-  {
-    id: '1',
-    title: 'Greetings - Ịkele',
-    description: 'Learn how to greet people in Ohafia',
-    level: 'A1',
-    duration: '5 min',
-    icon: '👋',
-    progress: 0,
-  },
-  {
-    id: '2',
-    title: 'Family - Ụlọ',
-    description: 'Words for family members',
-    level: 'A1',
-    duration: '8 min',
-    icon: '👨‍👩‍👧‍👦',
-    progress: 30,
-  },
-  {
-    id: '3',
-    title: 'Numbers - Ọnụọgụ',
-    description: 'Count from 1 to 20',
-    level: 'A1',
-    duration: '6 min',
-    icon: '🔢',
-    progress: 100,
-  },
-];
+// Map difficulty to icons
+const difficultyIcons: Record<string, string> = {
+  'A1': '🌱',
+  'A2': '🌿',
+  'B1': '🌳',
+  'B2': '🏔️',
+  'C1': '🎯',
+  'C2': '🏆',
+};
 
 const practiceCards = [
   { id: 'speak', title: 'Speak', icon: Mic, bgColor: 'bg-ohafia-primary-100 dark:bg-ohafia-primary-900/30', iconColor: 'text-ohafia-primary-600 dark:text-ohafia-primary-400', description: 'Practice pronunciation' },
@@ -44,7 +23,17 @@ const practiceCards = [
 
 export function HomePage() {
   const { user, profile } = useAuthStore();
-  const { streak, updateStreak, syncOfflineAttempts } = useLearnerStore();
+  const { 
+    streak, 
+    updateStreak, 
+    syncOfflineAttempts, 
+    fetchTodaysPlan, 
+    fetchContinueLesson, 
+    todaysPlan, 
+    continueLesson, 
+    dailyGoal,
+    isLoading 
+  } = useLearnerStore();
   
   // Role request state
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -58,8 +47,11 @@ export function HomePage() {
       updateStreak(profile.id);
       syncOfflineAttempts(profile.id);
       checkExistingRequest();
+      // Fetch lessons based on user's proficiency level
+      fetchTodaysPlan(profile.id, profile.proficiency_level || undefined);
+      fetchContinueLesson(profile.id);
     }
-  }, [profile?.id, updateStreak, syncOfflineAttempts]);
+  }, [profile?.id, profile?.proficiency_level, updateStreak, syncOfflineAttempts, fetchTodaysPlan, fetchContinueLesson]);
 
   // Check if user already has a pending request
   async function checkExistingRequest() {
@@ -153,10 +145,10 @@ export function HomePage() {
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="font-medium">Today's Goal</span>
-            <span className="text-sm text-ohafia-primary-100">2/5 lessons</span>
+            <span className="text-sm text-ohafia-primary-100">{dailyGoal.completed}/{dailyGoal.total} lessons</span>
           </div>
           <div className="progress-bar bg-white/20">
-            <div className="progress-bar-fill bg-white" style={{ width: '40%' }}></div>
+            <div className="progress-bar-fill bg-white" style={{ width: `${(dailyGoal.completed / dailyGoal.total) * 100}%` }}></div>
           </div>
         </div>
       </header>
@@ -164,31 +156,51 @@ export function HomePage() {
       {/* Content */}
       <main className="px-6 -mt-8 pb-8">
         {/* Continue learning card */}
-        <div className="card p-5 mb-6 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-ohafia-earth-900 dark:text-ohafia-sand-100">Continue Learning</h2>
-            <span className="badge-primary">In Progress</span>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-ohafia-primary-100 dark:bg-ohafia-primary-900/50 flex items-center justify-center text-2xl">
-              👨‍👩‍👧‍👦
+        {continueLesson ? (
+          <div className="card p-5 mb-6 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-ohafia-earth-900 dark:text-ohafia-sand-100">Continue Learning</h2>
+              {continueLesson.progress && continueLesson.progress > 0 && continueLesson.progress < 100 ? (
+                <span className="badge-primary">In Progress</span>
+              ) : (
+                <span className="badge-secondary">Start</span>
+              )}
             </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-ohafia-earth-800 dark:text-ohafia-sand-100">Family - Ụlọ</h3>
-              <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-400">Words for family members</p>
-              <div className="progress-bar mt-2 h-1.5">
-                <div className="progress-bar-fill" style={{ width: '30%' }}></div>
+            
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-ohafia-primary-100 dark:bg-ohafia-primary-900/50 flex items-center justify-center text-2xl">
+                {difficultyIcons[continueLesson.difficulty] || '📚'}
               </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-ohafia-earth-800 dark:text-ohafia-sand-100">{continueLesson.title}</h3>
+                <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-400">{continueLesson.description || `${continueLesson.estimated_minutes} min`}</p>
+                {continueLesson.progress && continueLesson.progress > 0 && (
+                  <div className="progress-bar mt-2 h-1.5">
+                    <div className="progress-bar-fill" style={{ width: `${continueLesson.progress}%` }}></div>
+                  </div>
+                )}
+              </div>
+              <Link
+                to={`/learn?lesson=${continueLesson.id}`}
+                className="w-12 h-12 rounded-full bg-ohafia-primary-500 text-white flex items-center justify-center shadow-ohafia hover:bg-ohafia-primary-600 transition-colors"
+              >
+                <Play className="w-5 h-5 ml-0.5" />
+              </Link>
             </div>
-            <Link
-              to="/learn"
-              className="w-12 h-12 rounded-full bg-ohafia-primary-500 text-white flex items-center justify-center shadow-ohafia hover:bg-ohafia-primary-600 transition-colors"
-            >
-              <Play className="w-5 h-5 ml-0.5" />
-            </Link>
           </div>
-        </div>
+        ) : isLoading ? (
+          <div className="card p-5 mb-6 shadow-lg flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-ohafia-primary-500" />
+          </div>
+        ) : (
+          <div className="card p-5 mb-6 shadow-lg">
+            <div className="text-center py-4">
+              <BookOpen className="w-10 h-10 mx-auto text-ohafia-earth-300 dark:text-ohafia-earth-600 mb-2" />
+              <p className="text-ohafia-earth-500 dark:text-ohafia-sand-400">No lessons available yet</p>
+              <p className="text-sm text-ohafia-earth-400 dark:text-ohafia-sand-500">Check back soon!</p>
+            </div>
+          </div>
+        )}
 
         {/* Quick practice section */}
         <section className="mb-6">
@@ -225,35 +237,49 @@ export function HomePage() {
             </Link>
           </div>
           
-          <div className="space-y-3">
-            {sampleLessons.map((lesson) => (
-              <Link key={lesson.id} to={`/learn?lesson=${lesson.id}`} className="lesson-card">
-                <div className="w-12 h-12 rounded-xl bg-ohafia-sand-100 dark:bg-ohafia-earth-800 flex items-center justify-center text-2xl flex-shrink-0">
-                  {lesson.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-ohafia-earth-800 dark:text-ohafia-sand-100 truncate">{lesson.title}</h3>
-                    <span className="badge-secondary text-xs">{lesson.level}</span>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-ohafia-primary-500" />
+            </div>
+          ) : todaysPlan.length > 0 ? (
+            <div className="space-y-3">
+              {todaysPlan.map((lesson) => (
+                <Link key={lesson.id} to={`/learn?lesson=${lesson.id}`} className="lesson-card">
+                  <div className="w-12 h-12 rounded-xl bg-ohafia-sand-100 dark:bg-ohafia-earth-800 flex items-center justify-center text-2xl flex-shrink-0">
+                    {difficultyIcons[lesson.difficulty] || '📚'}
                   </div>
-                  <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-400 truncate">{lesson.description}</p>
-                  {lesson.progress > 0 && lesson.progress < 100 && (
-                    <div className="progress-bar mt-2 h-1">
-                      <div className="progress-bar-fill" style={{ width: `${lesson.progress}%` }}></div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-ohafia-earth-800 dark:text-ohafia-sand-100 truncate">{lesson.title}</h3>
+                      <span className="badge-secondary text-xs">{lesson.difficulty}</span>
                     </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {lesson.progress === 100 ? (
-                    <span className="text-ohafia-secondary-500 dark:text-ohafia-secondary-400 text-sm font-medium">✓ Done</span>
-                  ) : (
-                    <span className="text-xs text-ohafia-earth-400 dark:text-ohafia-sand-500">{lesson.duration}</span>
-                  )}
-                  <ChevronRight className="w-5 h-5 text-ohafia-earth-300 dark:text-ohafia-earth-600" />
-                </div>
-              </Link>
-            ))}
-          </div>
+                    <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-400 truncate">{lesson.description || `${lesson.category || 'Lesson'}`}</p>
+                    {lesson.progress && lesson.progress > 0 && lesson.progress < 100 && (
+                      <div className="progress-bar mt-2 h-1">
+                        <div className="progress-bar-fill" style={{ width: `${lesson.progress}%` }}></div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {lesson.progress === 100 ? (
+                      <span className="text-ohafia-secondary-500 dark:text-ohafia-secondary-400 text-sm font-medium">✓ Done</span>
+                    ) : (
+                      <span className="text-xs text-ohafia-earth-400 dark:text-ohafia-sand-500">{lesson.estimated_minutes} min</span>
+                    )}
+                    <ChevronRight className="w-5 h-5 text-ohafia-earth-300 dark:text-ohafia-earth-600" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="card p-6 text-center">
+              <BookOpen className="w-10 h-10 mx-auto text-ohafia-earth-300 dark:text-ohafia-earth-600 mb-2" />
+              <p className="text-ohafia-earth-500 dark:text-ohafia-sand-400">No lessons available</p>
+              <p className="text-sm text-ohafia-earth-400 dark:text-ohafia-sand-500 mt-1">
+                Lessons will appear here once they're published
+              </p>
+            </div>
+          )}
         </section>
 
         {/* Become a Contributor section - only show for learners */}

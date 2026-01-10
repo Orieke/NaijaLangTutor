@@ -276,16 +276,16 @@ export function LearnPage() {
                       {category}
                     </h4>
                     {categoryAssets.map((asset) => (
-                      <div key={asset.id} className="card p-4 flex items-center justify-between mb-2">
+                      <div key={asset.id} className="card p-4 flex items-start gap-3 mb-2">
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-ohafia-earth-800 dark:text-ohafia-sand-100 igbo-text truncate">
+                          <p className="font-semibold text-ohafia-earth-800 dark:text-ohafia-sand-100 igbo-text break-words">
                             {asset.igbo_text}
                           </p>
-                          <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-300 truncate">
+                          <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-300 break-words">
                             {asset.english_text}
                           </p>
                           {asset.pronunciation_guide && (
-                            <p className="text-xs text-ohafia-earth-400 dark:text-ohafia-sand-400 italic mt-1">
+                            <p className="text-xs text-ohafia-earth-400 dark:text-ohafia-sand-400 italic mt-1 break-words">
                               /{asset.pronunciation_guide}/
                             </p>
                           )}
@@ -294,7 +294,7 @@ export function LearnPage() {
                           <button 
                             onClick={() => playAudio(asset)}
                             disabled={playingAudioId === asset.id}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ml-3 flex-shrink-0
+                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors flex-shrink-0
                               ${playingAudioId === asset.id 
                                 ? 'bg-ohafia-primary-500 text-white' 
                                 : 'bg-ohafia-primary-100 hover:bg-ohafia-primary-200 text-ohafia-primary-600'}`}
@@ -309,7 +309,7 @@ export function LearnPage() {
                         ) : ttsAvailable ? (
                           <button 
                             onClick={() => speakAsset(asset)}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ml-3 flex-shrink-0
+                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors flex-shrink-0
                               ${speakingAssetId === asset.id 
                                 ? 'bg-ohafia-secondary-500 text-white' 
                                 : 'bg-ohafia-secondary-100 hover:bg-ohafia-secondary-200 text-ohafia-secondary-600'}`}
@@ -318,7 +318,7 @@ export function LearnPage() {
                             <Volume2 className="w-5 h-5" />
                           </button>
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-ohafia-sand-100 flex items-center justify-center ml-3 flex-shrink-0" title="No audio available">
+                          <div className="w-10 h-10 rounded-full bg-ohafia-sand-100 flex items-center justify-center flex-shrink-0" title="No audio available">
                             <Volume2 className="w-5 h-5 text-ohafia-earth-300" />
                           </div>
                         )}
@@ -381,12 +381,12 @@ export function LearnPage() {
                           <Play className="w-5 h-5 ml-0.5" />
                         )}
                       </div>
-                      <div className="flex-1 text-left">
-                        <h3 className={`font-semibold ${isLocked ? 'text-ohafia-earth-400 dark:text-ohafia-sand-500' : 'text-ohafia-earth-800 dark:text-ohafia-sand-100'}`}>
+                      <div className="flex-1 text-left min-w-0">
+                        <h3 className={`font-semibold break-words ${isLocked ? 'text-ohafia-earth-400 dark:text-ohafia-sand-500' : 'text-ohafia-earth-800 dark:text-ohafia-sand-100'}`}>
                           {lesson.title}
                         </h3>
                         {lesson.description && (
-                          <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-400 line-clamp-1">
+                          <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-400 break-words line-clamp-2">
                             {lesson.description}
                           </p>
                         )}
