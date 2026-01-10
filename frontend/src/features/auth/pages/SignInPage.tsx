@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, Sparkles, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 
 export function SignInPage() {
@@ -84,34 +84,48 @@ export function SignInPage() {
             <Mail className="w-12 h-12 text-green-600 dark:text-green-400" />
           </div>
           <h1 className="font-display text-3xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 mb-3">
-            Check your inbox! 📧
+            Magic Link Sent! ✨
           </h1>
           <p className="text-ohafia-earth-600 dark:text-ohafia-sand-300 mb-2 text-lg">
-            We've sent a magic sign-in link to:
+            We've sent a sign-in link to:
           </p>
-          <p className="font-bold text-xl text-ohafia-primary-600 dark:text-ohafia-primary-400 mb-8 break-all">
+          <p className="font-bold text-xl text-ohafia-primary-600 dark:text-ohafia-primary-400 mb-6 break-all">
             {email}
           </p>
           
-          <div className="bg-ohafia-sand-100 dark:bg-ohafia-earth-700 rounded-2xl p-6 w-full mb-8 text-left space-y-3">
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-ohafia-earth-700 dark:text-ohafia-sand-200">
-                Click the link in your email to sign in instantly
-              </p>
+          {/* Step-by-step instructions */}
+          <div className="bg-ohafia-primary-50 dark:bg-ohafia-primary-900/20 border-2 border-ohafia-primary-200 dark:border-ohafia-primary-800 rounded-2xl p-5 w-full mb-6">
+            <h3 className="font-semibold text-ohafia-primary-700 dark:text-ohafia-primary-300 mb-4 text-left">What to do next:</h3>
+            <div className="space-y-4 text-left">
+              <div className="flex items-start gap-3">
+                <span className="w-7 h-7 rounded-full bg-ohafia-primary-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">1</span>
+                <div>
+                  <p className="font-medium text-ohafia-earth-800 dark:text-ohafia-sand-100">Open your email app</p>
+                  <p className="text-sm text-ohafia-earth-600 dark:text-ohafia-sand-400">Check inbox for "Sign in to Asụsụ Ohafia"</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-7 h-7 rounded-full bg-ohafia-primary-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
+                <div>
+                  <p className="font-medium text-ohafia-earth-800 dark:text-ohafia-sand-100">Click the magic link</p>
+                  <p className="text-sm text-ohafia-earth-600 dark:text-ohafia-sand-400">Tap "Sign In" button in the email</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-7 h-7 rounded-full bg-ohafia-primary-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">3</span>
+                <div>
+                  <p className="font-medium text-ohafia-earth-800 dark:text-ohafia-sand-100">You're signed in!</p>
+                  <p className="text-sm text-ohafia-earth-600 dark:text-ohafia-sand-400">The app will open automatically</p>
+                </div>
+              </div>
             </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-ohafia-earth-700 dark:text-ohafia-sand-200">
-                The link expires in 1 hour for security
-              </p>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-ohafia-earth-700 dark:text-ohafia-sand-200">
-                Check your spam folder if you don't see it
-              </p>
-            </div>
+          </div>
+          
+          {/* Tips section */}
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 w-full mb-6">
+            <p className="text-sm text-amber-800 dark:text-amber-300">
+              <strong>💡 Tip:</strong> Don't see the email? Check your <strong>spam/junk folder</strong>. The link expires in 1 hour.
+            </p>
           </div>
 
           <div className="w-full space-y-3">
@@ -138,7 +152,7 @@ export function SignInPage() {
               disabled={isSubmitting}
               className="w-full py-3 px-4 rounded-xl text-ohafia-primary-600 dark:text-ohafia-primary-400 font-medium hover:bg-ohafia-primary-50 dark:hover:bg-ohafia-primary-900/20 transition-colors disabled:opacity-50"
             >
-              {isSubmitting ? 'Resending...' : 'Resend magic link'}
+              {isSubmitting ? 'Resending...' : "Didn't receive it? Resend link"}
             </button>
           </div>
         </div>

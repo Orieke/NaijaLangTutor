@@ -70,53 +70,94 @@ export function AuthCallbackPage() {
   }, [navigate, initialize]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-gradient-to-b from-ohafia-sand-50 to-white">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-gradient-to-b from-ohafia-sand-50 to-white dark:from-ohafia-earth-900 dark:to-ohafia-earth-800">
       <div className="text-center max-w-md">
         {status === 'loading' && (
           <>
-            <div className="w-20 h-20 rounded-full bg-ohafia-primary-100 flex items-center justify-center mx-auto mb-6">
-              <Loader2 className="w-10 h-10 text-ohafia-primary-600 animate-spin" />
+            <div className="w-24 h-24 rounded-full bg-ohafia-primary-100 dark:bg-ohafia-primary-900/30 flex items-center justify-center mx-auto mb-6">
+              <Loader2 className="w-12 h-12 text-ohafia-primary-600 dark:text-ohafia-primary-400 animate-spin" />
             </div>
-            <h1 className="font-display text-2xl font-bold text-ohafia-earth-900 mb-2">
-              Verifying your sign-in...
+            <h1 className="font-display text-2xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 mb-3">
+              Signing you in... ✨
             </h1>
-            <p className="text-ohafia-earth-600">
-              Please wait while we securely sign you in.
+            <p className="text-ohafia-earth-600 dark:text-ohafia-sand-300 mb-6">
+              Verifying your magic link, just a moment!
             </p>
+            <div className="bg-ohafia-sand-100 dark:bg-ohafia-earth-700 rounded-xl p-4">
+              <p className="text-sm text-ohafia-earth-500 dark:text-ohafia-sand-400">
+                🔒 Securely authenticating your account
+              </p>
+            </div>
           </>
         )}
 
         {status === 'success' && (
           <>
-            <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6 animate-scale-in">
-              <CheckCircle className="w-10 h-10 text-green-600" />
+            <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-6 animate-scale-in">
+              <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
             </div>
-            <h1 className="font-display text-2xl font-bold text-ohafia-earth-900 mb-2">
-              Welcome back! 🎉
+            <h1 className="font-display text-2xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 mb-3">
+              Welcome! 🎉
             </h1>
-            <p className="text-ohafia-earth-600">
-              You've been signed in successfully. Redirecting to your dashboard...
+            <p className="text-ohafia-earth-600 dark:text-ohafia-sand-300 mb-4">
+              You're signed in successfully!
             </p>
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-6">
+              <p className="text-sm text-green-700 dark:text-green-300">
+                🚀 Taking you to your learning dashboard...
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2 text-ohafia-earth-400 dark:text-ohafia-sand-500">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm">Redirecting...</span>
+            </div>
           </>
         )}
 
         {status === 'error' && (
           <>
-            <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
-              <XCircle className="w-10 h-10 text-red-600" />
+            <div className="w-24 h-24 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-6">
+              <XCircle className="w-12 h-12 text-red-600 dark:text-red-400" />
             </div>
-            <h1 className="font-display text-2xl font-bold text-ohafia-earth-900 mb-2">
-              Sign-in failed
+            <h1 className="font-display text-2xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 mb-3">
+              Oops! Link expired or invalid 😕
             </h1>
-            <p className="text-ohafia-earth-600 mb-6">
-              {errorMessage || 'Something went wrong. Please try signing in again.'}
+            <p className="text-ohafia-earth-600 dark:text-ohafia-sand-300 mb-6">
+              {errorMessage || 'The magic link may have expired or already been used.'}
             </p>
-            <button
-              onClick={() => navigate('/auth/sign-in', { replace: true })}
-              className="btn-primary px-8 py-3"
-            >
-              Try Again
-            </button>
+            
+            <div className="bg-ohafia-sand-100 dark:bg-ohafia-earth-700 rounded-xl p-5 mb-6 text-left">
+              <p className="font-medium text-ohafia-earth-800 dark:text-ohafia-sand-100 mb-3">This can happen when:</p>
+              <ul className="space-y-2 text-sm text-ohafia-earth-600 dark:text-ohafia-sand-300">
+                <li className="flex items-start gap-2">
+                  <span>⏱️</span>
+                  <span>The link expired (valid for 1 hour)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span>🔗</span>
+                  <span>The link was already used once</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span>📋</span>
+                  <span>The link was copied incorrectly</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div className="w-full space-y-3">
+              <button
+                onClick={() => navigate('/auth/sign-in', { replace: true })}
+                className="btn-primary w-full py-3"
+              >
+                Get a new magic link
+              </button>
+              <button
+                onClick={() => navigate('/', { replace: true })}
+                className="w-full py-3 text-ohafia-earth-600 dark:text-ohafia-sand-400 hover:text-ohafia-earth-800 dark:hover:text-ohafia-sand-200 transition-colors"
+              >
+                Go to homepage
+              </button>
+            </div>
           </>
         )}
       </div>

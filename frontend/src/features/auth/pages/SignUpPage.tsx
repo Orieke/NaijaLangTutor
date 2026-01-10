@@ -105,98 +105,114 @@ export function SignUpPage() {
   // Show email verification message after successful signup
   if (showEmailSent) {
     return (
-      <div className="min-h-screen flex flex-col px-6 py-8 bg-gradient-to-b from-ohafia-sand-50 to-white">
+      <div className="min-h-screen flex flex-col px-6 py-8 bg-gradient-to-b from-ohafia-sand-50 to-white dark:from-ohafia-earth-900 dark:to-ohafia-earth-800">
         {/* Header */}
         <div className="flex items-center mb-8">
-          <Link to="/" className="p-2 -ml-2 rounded-xl hover:bg-ohafia-sand-200 transition-colors">
-            <ArrowLeft className="w-6 h-6 text-ohafia-earth-700" />
+          <Link to="/" className="p-2 -ml-2 rounded-xl hover:bg-ohafia-sand-200 dark:hover:bg-ohafia-earth-700 transition-colors">
+            <ArrowLeft className="w-6 h-6 text-ohafia-earth-700 dark:text-ohafia-sand-300" />
           </Link>
         </div>
 
         {/* Email Sent Confirmation */}
         <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full text-center">
           {/* Success Icon */}
-          <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center mb-6 animate-bounce-slow">
-            <MailCheck className="w-12 h-12 text-green-600" />
+          <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-6 animate-scale-in">
+            <MailCheck className="w-12 h-12 text-green-600 dark:text-green-400" />
           </div>
 
-          <h1 className="font-display text-3xl font-bold text-ohafia-earth-900 mb-4">
-            Check Your Email! 📬
+          <h1 className="font-display text-3xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 mb-3">
+            Almost There! 🎉
           </h1>
+          <p className="text-lg text-ohafia-earth-600 dark:text-ohafia-sand-300 mb-2">
+            We've sent a verification link to:
+          </p>
+          <p className="text-xl font-bold text-ohafia-primary-600 dark:text-ohafia-primary-400 break-all mb-6">
+            {email}
+          </p>
           
-          <div className="bg-ohafia-primary-50 border-2 border-ohafia-primary-200 rounded-2xl p-6 mb-6">
-            <p className="text-lg text-ohafia-earth-700 mb-2">
-              We've sent a verification link to:
-            </p>
-            <p className="text-xl font-bold text-ohafia-primary-600 break-all">
-              {email}
+          {/* Step-by-step instructions */}
+          <div className="bg-ohafia-primary-50 dark:bg-ohafia-primary-900/20 border-2 border-ohafia-primary-200 dark:border-ohafia-primary-800 rounded-2xl p-5 w-full mb-6">
+            <h3 className="font-semibold text-ohafia-primary-700 dark:text-ohafia-primary-300 mb-4 text-left">Complete your registration:</h3>
+            <div className="space-y-4 text-left">
+              <div className="flex items-start gap-3">
+                <span className="w-7 h-7 rounded-full bg-ohafia-primary-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">1</span>
+                <div>
+                  <p className="font-medium text-ohafia-earth-800 dark:text-ohafia-sand-100">Open your email app</p>
+                  <p className="text-sm text-ohafia-earth-600 dark:text-ohafia-sand-400">Look for "Confirm your email" from Asụsụ Ohafia</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-7 h-7 rounded-full bg-ohafia-primary-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
+                <div>
+                  <p className="font-medium text-ohafia-earth-800 dark:text-ohafia-sand-100">Click the verification link</p>
+                  <p className="text-sm text-ohafia-earth-600 dark:text-ohafia-sand-400">This confirms your email is real</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-7 h-7 rounded-full bg-ohafia-primary-500 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">3</span>
+                <div>
+                  <p className="font-medium text-ohafia-earth-800 dark:text-ohafia-sand-100">Start learning!</p>
+                  <p className="text-sm text-ohafia-earth-600 dark:text-ohafia-sand-400">You'll be taken to your personalized setup</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Important notice */}
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 w-full mb-6">
+            <p className="text-sm text-amber-800 dark:text-amber-300">
+              <strong>⚠️ Important:</strong> You must verify your email before you can sign in. Check your <strong>spam/junk folder</strong> if you don't see it!
             </p>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-            <p className="text-amber-800 font-medium">
-              ⚠️ Please click the link in your email to complete your registration
-            </p>
-          </div>
-
-          <div className="space-y-3 text-sm text-ohafia-earth-600">
-            <p>📥 Check your inbox (and spam folder)</p>
-            <p>🔗 Click the verification link</p>
-            <p>✨ Start learning Igbo!</p>
-          </div>
-
-          <div className="mt-8 pt-6 border-t border-ohafia-sand-200 w-full">
-            <p className="text-sm text-ohafia-earth-500 mb-4">
-              Didn't receive the email?
-            </p>
+          <div className="w-full space-y-3">
             <button
               onClick={() => {
                 setShowEmailSent(false);
                 clearError();
               }}
-              className="btn-secondary text-sm"
+              className="w-full py-3 px-4 rounded-xl border-2 border-ohafia-sand-300 dark:border-ohafia-earth-600 text-ohafia-earth-700 dark:text-ohafia-sand-200 font-medium hover:bg-ohafia-sand-100 dark:hover:bg-ohafia-earth-700 transition-colors"
             >
-              Try signing up again
+              ← Use a different email
             </button>
+            <Link 
+              to="/auth/sign-in" 
+              className="block w-full py-3 text-center text-ohafia-primary-600 dark:text-ohafia-primary-400 font-medium hover:text-ohafia-primary-700 dark:hover:text-ohafia-primary-300"
+            >
+              Already verified? Sign in →
+            </Link>
           </div>
-
-          <Link 
-            to="/auth/sign-in" 
-            className="mt-4 text-ohafia-primary-600 font-medium hover:text-ohafia-primary-700"
-          >
-            Already verified? Sign in →
-          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col px-6 py-8 bg-gradient-to-b from-ohafia-sand-50 to-white">
+    <div className="min-h-screen flex flex-col px-6 py-8 bg-gradient-to-b from-ohafia-sand-50 to-white dark:from-ohafia-earth-900 dark:to-ohafia-earth-800">
       {/* Header */}
       <div className="flex items-center mb-8">
-        <Link to="/" className="p-2 -ml-2 rounded-xl hover:bg-ohafia-sand-200 transition-colors">
-          <ArrowLeft className="w-6 h-6 text-ohafia-earth-700" />
+        <Link to="/" className="p-2 -ml-2 rounded-xl hover:bg-ohafia-sand-200 dark:hover:bg-ohafia-earth-700 transition-colors">
+          <ArrowLeft className="w-6 h-6 text-ohafia-earth-700 dark:text-ohafia-sand-300" />
         </Link>
       </div>
 
       {/* Content */}
       <div className="flex-1 flex flex-col max-w-md mx-auto w-full">
-        <h1 className="font-display text-3xl font-bold text-ohafia-earth-900 mb-2">
+        <h1 className="font-display text-3xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 mb-2">
           Join Asụsụ Ohafia 🎉
         </h1>
-        <p className="text-ohafia-earth-600 mb-8">
+        <p className="text-ohafia-earth-600 dark:text-ohafia-sand-300 mb-8">
           Create your free account and start learning Igbo (Ohafia dialect) today!
         </p>
 
         {/* Error message */}
         {displayError && (
-          <div className="flex items-start gap-3 p-4 mb-6 rounded-xl bg-red-50 border border-red-100 text-red-700 animate-fade-in">
+          <div className="flex items-start gap-3 p-4 mb-6 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-700 dark:text-red-400 animate-fade-in">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium">{displayError}</p>
               {error?.includes('already registered') && (
-                <Link to="/auth/sign-in" className="text-sm text-red-600 underline mt-1 inline-block">
+                <Link to="/auth/sign-in" className="text-sm text-red-600 dark:text-red-400 underline mt-1 inline-block">
                   Go to Sign In →
                 </Link>
               )}
