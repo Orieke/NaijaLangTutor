@@ -39,7 +39,7 @@ export function PracticePage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showAnswer, setShowAnswer] = useState(false);
+
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   
   // Data fetching state
@@ -191,7 +191,6 @@ export function PracticePage() {
     }
     if (currentIndex < practiceWords.length - 1) {
       setCurrentIndex(prev => prev + 1);
-      setShowAnswer(false);
       setFeedback(null);
     } else {
       // Practice complete - save progress
@@ -208,7 +207,6 @@ export function PracticePage() {
     }
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
-      setShowAnswer(false);
       setFeedback(null);
     }
   };
@@ -698,45 +696,31 @@ export function PracticePage() {
           )}
 
           {mode === 'flashcard' && (
-            <button
-              onClick={() => setShowAnswer(!showAnswer)}
-              className="w-full h-full flex flex-col items-center justify-center"
-            >
-              {!showAnswer ? (
-                <>
-                  <p className="text-ohafia-earth-500 dark:text-ohafia-sand-400 text-sm mb-4">What does this mean?</p>
-                  <h2 className="text-4xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 igbo-text mb-4">
-                    {currentWord.igbo}
-                  </h2>
-                  <p className="text-sm text-ohafia-earth-400 dark:text-ohafia-sand-500">Tap to reveal</p>
-                </>
-              ) : (
-                <>
-                  <h2 className="text-4xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 igbo-text mb-2">
-                    {currentWord.igbo}
-                  </h2>
-                  <p className="text-2xl text-ohafia-primary-600 dark:text-ohafia-primary-400 mb-8">{currentWord.english}</p>
-                  
-                  {/* Self-assessment buttons */}
-                  <div className="flex gap-4">
+            <div className="w-full h-full flex flex-col items-center justify-center">
+              <p className="text-ohafia-earth-500 dark:text-ohafia-sand-400 text-sm mb-4">What does this mean?</p>
+              <h2 className="text-4xl font-bold text-ohafia-earth-900 dark:text-ohafia-sand-50 igbo-text mb-8">
+                {currentWord.igbo}
+              </h2>
+              
+              {/* Multiple choice options */}
+              <div className="w-full space-y-3">
+                {(() => {
+                  // Get up to 3 wrong answers and shuffle with correct answer
+                  const otherWords = practiceWords.filter(w => w.id !== currentWord.id);
+                  const wrongOptions = otherWords.slice(0, 3);
+                  const allOptions = [...wrongOptions, currentWord].sort(() => Math.random() - 0.5);
+                  return allOptions.map((word) => (
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleAnswer(false); }}
-                      className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-100 text-red-700 font-medium hover:bg-red-200 transition-colors"
+                      key={word.id}
+                      onClick={() => handleAnswer(word.id === currentWord.id)}
+                      className="w-full p-4 card-interactive text-left"
                     >
-                      <X className="w-5 h-5" />
-                      Again
+                      <span className="font-medium text-ohafia-earth-800 dark:text-ohafia-sand-100">{word.english}</span>
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleAnswer(true); }}
-                      className="flex items-center gap-2 px-6 py-3 rounded-xl bg-ohafia-secondary-100 text-ohafia-secondary-700 font-medium hover:bg-ohafia-secondary-200 transition-colors"
-                    >
-                      <Check className="w-5 h-5" />
-                      Got it
-                    </button>
-                  </div>
-                </>
-              )}
-            </button>
+                  ));
+                })()}
+              </div>
+            </div>
           )}
 
           {/* Feedback overlay */}
@@ -771,7 +755,7 @@ export function PracticePage() {
             Previous
           </button>
           <button
-            onClick={() => { setCurrentIndex(0); setShowAnswer(false); setFeedback(null); }}
+            onClick={() => { setCurrentIndex(0); setFeedback(null); }}
             className="p-3 rounded-xl text-ohafia-earth-500 dark:text-ohafia-sand-400 hover:bg-ohafia-sand-200 dark:hover:bg-ohafia-earth-700"
           >
             <RotateCcw className="w-5 h-5" />
