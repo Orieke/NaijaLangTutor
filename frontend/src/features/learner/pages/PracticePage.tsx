@@ -194,7 +194,7 @@ export function PracticePage() {
       setFeedback(null);
     } else {
       // Practice complete - save progress
-      handlePracticeComplete();
+      handlePracticeComplete(correctCount);
     }
   };
 
@@ -211,11 +211,11 @@ export function PracticePage() {
     }
   };
 
-  const handlePracticeComplete = async () => {
+  const handlePracticeComplete = async (finalCorrectCount: number) => {
     if (!user || !lessonId) return;
 
     const accuracy = practiceWords.length > 0 
-      ? Math.round((correctCount / practiceWords.length) * 100) 
+      ? Math.round((finalCorrectCount / practiceWords.length) * 100) 
       : 0;
 
     try {
@@ -362,14 +362,15 @@ export function PracticePage() {
 
   const handleAnswer = (correct: boolean) => {
     setFeedback(correct ? 'correct' : 'incorrect');
+    const newCorrectCount = correct ? correctCount + 1 : correctCount;
     if (correct) {
-      setCorrectCount(prev => prev + 1);
+      setCorrectCount(newCorrectCount);
     }
     setTimeout(() => {
       if (currentIndex < practiceWords.length - 1) {
         handleNext();
       } else {
-        handlePracticeComplete();
+        handlePracticeComplete(newCorrectCount);
       }
     }, 1000);
   };
